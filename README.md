@@ -12,9 +12,9 @@ Also handles slow-release granular (bigger, fewer rounds), splits foliar sprays 
 
 ## Files
 
-- `index.html` — the whole app
-- `manifest.webmanifest`, `sw.js`, icons — makes it installable as an app
-- `netlify.toml` — deploy config
+- `index.html` the whole app
+- `manifest.webmanifest`, `sw.js`, icons, makes it installable as an app
+- `netlify.toml` deploy config
 
 ## Running it
 
