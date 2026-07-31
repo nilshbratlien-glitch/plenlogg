@@ -166,6 +166,9 @@ input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;width:auto;marg
 .next.overdue{border-color:var(--soil);background:var(--soil-soft)}
 .next.overdue .when{color:var(--warn-ink)}
 .nextbtns{display:flex;gap:8px;margin-top:2px}
+.synced{font-family:var(--mono);font-size:10.5px;color:var(--muted);text-align:center;margin:10px 0 0}
+.synccode{font-family:var(--mono);font-size:20px;letter-spacing:.18em;font-weight:600;color:var(--ink);
+  background:var(--chloro-soft);border:1px solid var(--line-soft);border-radius:10px;padding:12px;text-align:center;user-select:all}
 .nextbtns .btn{flex:none}
 .next .what{font-family:var(--cond);font-size:21px;font-weight:700;line-height:1.15;margin-top:3px}
 .next .sub{font-size:12.5px;color:var(--ok-sub);margin-top:3px}
@@ -409,6 +412,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
   <!-- ============ HOME ============ -->
   <section class="panel" id="p-home">
     <div id="homeOut"></div>
+    <p class="synced" id="syncLine"></p>
   </section>
 
   <!-- ============ LOG ============ -->
@@ -548,6 +552,32 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
       <input type="file" id="importFile" accept="application/json,.json" hidden>
       <p class="hint">Export regularly. Clearing your browser data erases everything stored here.</p>
       <button class="btn danger" id="clearBtn" style="margin-top:8px">Delete all entries</button>
+    </div>
+
+    <div class="card">
+      <p class="eyebrow">Backup &amp; sync</p>
+      <div id="syncOff">
+        <p class="hint" style="margin-top:0">Keep a copy off this device, so a lost or wiped phone does not take your log with it. Turn it on here, then enter the same code on your other device.</p>
+        <button class="btn" id="syncStart">Turn on backup</button>
+      </div>
+      <div id="syncOn" hidden>
+        <p class="hint" style="margin-top:0">Your code — enter this on any other device to share the same log.</p>
+        <div class="synccode" id="syncCode"></div>
+        <div class="nextbtns" style="margin-top:10px">
+          <button class="btn sm ghost" id="syncCopy">Copy code</button>
+          <button class="btn sm ghost" id="syncNow">Sync now</button>
+        </div>
+        <p class="hint" id="syncState"></p>
+        <button class="btn ghost" id="syncOffBtn" style="margin-top:8px">Turn off backup</button>
+      </div>
+      <details style="margin-top:10px"><summary>Use a code from another device</summary>
+        <div class="field" style="margin-top:8px">
+          <label for="syncJoin">Code from your other device</label>
+          <input id="syncJoin" placeholder="XXXXXXXX" autocapitalize="characters" spellcheck="false">
+        </div>
+        <button class="btn sm" id="syncJoinBtn">Link this device</button>
+        <p class="hint">This device will take on that log, replacing what is stored here now. Export first if you have anything you want to keep.</p>
+      </details>
     </div>
   </section>
 </div>
@@ -710,6 +740,70 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
    ============================================================ */
 const KEY='plenlogg:v3', LEGACY='plenlogg:v2';
 const mem={};
+/* ============================================================
+   Sync — automatic off-device backup
+
+   The app stays local-first: every read and write hits localStorage exactly
+   as before, so it works offline and never blocks on the network. Sync is a
+   layer on top that (a) pushes the whole document up after each save and
+   (b) pulls once on boot, taking whichever copy is newer.
+
+   Pairing is a generated code, not an account. Whoever holds the code holds
+   the data, so it is generated with enough entropy not to be guessable.
+   Conflict handling is deliberately simple — last write wins on the whole
+   document — because a single person logging lawn work rarely edits two
+   devices at once, and a visible "last synced" beats hidden cleverness.
+   ============================================================ */
+const SYNC_KEY='plenlogg.sync';
+const Sync={
+  cfg(){ try{return JSON.parse(localStorage.getItem(SYNC_KEY))||{};}catch(e){return {};} },
+  save(c){ try{localStorage.setItem(SYNC_KEY,JSON.stringify(c));}catch(e){} },
+  get code(){ return this.cfg().code||''; },
+  get last(){ return this.cfg().last||0; },
+  set last(t){ const c=this.cfg(); c.last=t; this.save(c); },
+  enabled(){ return !!this.code; },
+  /* 8 chars from a 32-symbol alphabet — ~40 bits, not guessable by hand.
+     Ambiguous characters (0/O, 1/I) left out so it can be read aloud. */
+  make(){
+    const A='23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    let out='';
+    const buf=new Uint32Array(8);
+    (crypto&&crypto.getRandomValues)?crypto.getRandomValues(buf):buf.forEach((_,i)=>buf[i]=Math.random()*4294967296);
+    for(let i=0;i<8;i++) out+=A[buf[i]%A.length];
+    return out;
+  },
+  link(code){ const c=this.cfg(); c.code=String(code||'').toUpperCase().trim(); c.last=0; this.save(c); },
+  unlink(){ this.save({}); },
+  /* Push: fire-and-forget. A failure here must never cost the user their
+     local save, so it resolves quietly and just leaves `last` untouched. */
+  async push(doc){
+    if(!this.enabled()) return false;
+    try{
+      const t=Date.now();
+      const r=await fetch('/api/sync?code='+encodeURIComponent(this.code),{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({data:doc,updated:t})
+      });
+      if(r.ok){ this.last=t; return true; }
+    }catch(e){}
+    return false;
+  },
+  /* Pull: returns the remote document only if it is newer than what we hold. */
+  async pull(localUpdated){
+    if(!this.enabled()) return null;
+    try{
+      const r=await fetch('/api/sync?code='+encodeURIComponent(this.code),{cache:'no-store'});
+      if(!r.ok) return null;
+      const j=await r.json();
+      if(!j||typeof j.data==='undefined') return null;
+      this.last=Date.now();
+      if(!localUpdated || (j.updated||0) > localUpdated) return j;
+      return null;
+    }catch(e){}
+    return null;
+  }
+};
+
 const Store={
   async raw(k){
     if(window.storage&&window.storage.get){
@@ -720,9 +814,13 @@ const Store={
   },
   async get(){ return (await this.raw(KEY)) || (await this.raw(LEGACY)); },
   async set(obj){
+    /* Stamp every save so two devices can be compared without a server clock. */
+    obj.updated=Date.now();
     const str=JSON.stringify(obj); mem[KEY]=obj;
-    if(window.storage&&window.storage.set){try{await window.storage.set(KEY,str,false);return;}catch(e){}}
-    try{localStorage.setItem(KEY,str);}catch(e){}
+    if(window.storage&&window.storage.set){try{await window.storage.set(KEY,str,false);}catch(e){}}
+    else { try{localStorage.setItem(KEY,str);}catch(e){} }
+    /* Back up off-device, but never let it block or break the local save. */
+    if(Sync.enabled()) Sync.push(obj).then(ok=>{ if(ok) renderSyncLine(); });
   }
 };
 
@@ -2793,6 +2891,71 @@ document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
 
 F('yrPrev').onclick=()=>{viewYear--; renderSeason();};
 F('yrNext').onclick=()=>{viewYear++; renderSeason();};
+/* ---- sync UI ---- */
+function agoText(t){
+  if(!t) return 'not yet';
+  const d=Date.now()-t, m=Math.round(d/60000);
+  if(m<1) return 'just now';
+  if(m<60) return m+' min ago';
+  const h=Math.round(m/60);
+  if(h<24) return h+' hour'+(h>1?'s':'')+' ago';
+  const dd=Math.round(h/24);
+  return dd+' day'+(dd>1?'s':'')+' ago';
+}
+function renderSyncLine(){
+  const el=document.getElementById('syncLine');
+  if(el) el.textContent = Sync.enabled() ? ('Backed up '+agoText(Sync.last)) : '';
+  const on=document.getElementById('syncOn'), off=document.getElementById('syncOff');
+  if(on&&off){
+    on.hidden=!Sync.enabled(); off.hidden=Sync.enabled();
+    const c=document.getElementById('syncCode'); if(c) c.textContent=Sync.code||'';
+    const st=document.getElementById('syncState');
+    if(st) st.textContent = Sync.enabled() ? ('Last backed up '+agoText(Sync.last)+'.') : '';
+  }
+}
+function wireSync(){
+  const $=id=>document.getElementById(id);
+  $('syncStart')&&($('syncStart').onclick=async()=>{
+    Sync.link(Sync.make());
+    const ok=await Sync.push(store);
+    renderSyncLine();
+    if(!ok) alert('Backup is on, but the first upload did not go through. It will retry next time you change something.');
+  });
+  $('syncOffBtn')&&($('syncOffBtn').onclick=()=>{
+    if(confirm('Turn off backup? Your log stays on this device, but it will no longer be copied off it.')){
+      Sync.unlink(); renderSyncLine();
+    }
+  });
+  $('syncCopy')&&($('syncCopy').onclick=async()=>{
+    try{ await navigator.clipboard.writeText(Sync.code); $('syncCopy').textContent='Copied'; 
+      setTimeout(()=>$('syncCopy').textContent='Copy code',1500); }catch(e){}
+  });
+  $('syncNow')&&($('syncNow').onclick=async()=>{
+    const ok=await Sync.push(store); renderSyncLine();
+    $('syncNow').textContent = ok?'Synced':'Failed';
+    setTimeout(()=>$('syncNow').textContent='Sync now',1500);
+  });
+  $('syncJoinBtn')&&($('syncJoinBtn').onclick=async()=>{
+    const v=($('syncJoin').value||'').toUpperCase().trim();
+    if(!/^[A-Z0-9]{8,32}$/.test(v)){ alert('That code does not look right — it should be 8 characters.'); return; }
+    if(!confirm('Link this device to that code? The log stored here now will be replaced by the one from your other device.')) return;
+    Sync.link(v);
+    const remote=await Sync.pull(0);
+    if(remote&&remote.data){
+      loadStore(remote.data); save();
+      writeSettings(); refreshPlan(); renderLawnBar();
+      renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
+      renderSyncLine();
+      alert('Linked. This device now shows the log from your other device.');
+    }else{
+      alert('Linked, but nothing was found stored under that code yet.');
+      renderSyncLine();
+    }
+  });
+  renderSyncLine();
+}
+wireSync();
+
 F('exportBtn').onclick=()=>{
   const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
   const a=document.createElement('a');
@@ -2809,9 +2972,27 @@ F('clearBtn').onclick=()=>{
    Boot
    ============================================================ */
 (async()=>{
-  loadStore(await Store.get());
+  const local=await Store.get();
+  loadStore(local);
   writeSettings(); refreshPlan(); renderLawnBar();
   renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
+
+  /* Catch up from the backup after the UI is already usable. If the stored
+     copy is newer than ours, adopt it and re-render; otherwise push ours so
+     the backup is current. Either way the app was interactive first. */
+  if(Sync.enabled()){
+    try{
+      const remote=await Sync.pull(local&&local.updated||0);
+      if(remote&&remote.data){
+        loadStore(remote.data);
+        writeSettings(); refreshPlan(); renderLawnBar();
+        renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
+      }else if(store){
+        Sync.push(store);
+      }
+    }catch(e){}
+    renderSyncLine();
+  }
 })();
 
 /* ---- PWA service worker ----

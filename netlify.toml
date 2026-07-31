@@ -1,4 +1,11 @@
-# Ensures Netlify serves the PWA files with correct types and no interference.
+# Serves the PWA files with correct types and enables the sync function.
+
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
 
 [[headers]]
   for = "/manifest.webmanifest"

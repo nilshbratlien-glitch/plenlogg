@@ -1,6 +1,6 @@
 /* Plenlogg service worker — offline shell + installability.
    Bump CACHE when you deploy a new version of the app. */
-const CACHE = 'plenlogg-v1';
+const CACHE = 'plenlogg-v2';
 const SHELL = ['./', './index.html', './icon-192.png', './icon-512.png', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {
@@ -20,6 +20,8 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // Never cache the sync API — a stale backup response would be worse than none.
+  if (url.pathname.startsWith('/api/')) return;
   // Same-origin: network-first, fall back to cache (so updates land but offline works).
   if (url.origin === location.origin) {
     e.respondWith(
