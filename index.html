@@ -1,0 +1,2826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PWA: installable, opens fullscreen with no address bar -->
+<meta name="theme-color" content="#0E1411">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Plenlogg">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" type="image/png" href="./icon-192.png">
+<style>
+:root{
+  --paper:#F2F4EF; --card:#FFFFFF; --ink:#16211C; --muted:#5C6B60;
+  --line:#D5DCD1; --line-soft:#E7ECE4;
+  --chloro:#2E7D4F; --chloro-soft:#E4F0E7;
+  --frost:#4F7C93; --frost-soft:#EFF4F6;
+  --soil:#A9652E; --soil-soft:#FBF0E4;
+  --ok-line:#C6DFCE; --ok-ink:#2A5138; --ok-sub:#3D5A48; --ok-strong:#22402F;
+  --warn-line:#EEDCC4; --warn-ink:#6E441C;
+  --info-line:#D6E2E8; --info-ink:#2C4A58;
+  --danger:#9A4B4B; --danger-line:#E4CFCF;
+  --dot-up:#9DAEA2; --dot-pre:#E2E7E0; --day-out:#B9C2B7; --card-line:#DDE4D9;
+  --on-ink:#FFFFFF; --on-chloro:#FFFFFF;
+  --on-ink-soft:rgba(255,255,255,.72); --on-chloro-soft:rgba(255,255,255,.6);
+  --shade:rgba(22,33,28,.42); --tabs:rgba(255,255,255,.96);
+  --sans:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  --cond:'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --paper:#0E1411; --card:#161E1A; --ink:#E7EDE7; --muted:#94A398;
+  --line:#2A342D; --line-soft:#212B25;
+  --chloro:#5CB77F; --chloro-soft:#182C20;
+  --frost:#84B2C8; --frost-soft:#15242B;
+  --soil:#D28E52; --soil-soft:#2C2018;
+  --ok-line:#2C4A37; --ok-ink:#A9D9BC; --ok-sub:#9BCBAE; --ok-strong:#C6E7D4;
+  --warn-line:#4A3826; --warn-ink:#E3B489;
+  --info-line:#2A3F49; --info-ink:#AACDDD;
+  --danger:#D98C8C; --danger-line:#4A2E2E;
+  --dot-up:#5A6D61; --dot-pre:#28322C; --day-out:#4A564E; --card-line:#28332C;
+  --on-ink:#0E1411; --on-chloro:#08150E;
+  --on-ink-soft:rgba(14,20,17,.68); --on-chloro-soft:rgba(8,21,14,.58);
+  --shade:rgba(0,0,0,.58); --tabs:rgba(22,30,26,.96);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+html{background:var(--paper)}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;
+  line-height:1.5;padding-bottom:86px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:620px;margin:0 auto;padding:0 14px}
+
+header{padding:18px 0 12px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.brand{display:flex;align-items:baseline;gap:9px}
+.themebtn{margin-left:auto;background:var(--card);border:1px solid var(--line);color:var(--ink);
+  width:34px;height:34px;border-radius:9px;font-size:14px;line-height:1;flex:none;align-self:center}
+@media (prefers-reduced-motion:no-preference){
+  body{transition:background-color .18s ease,color .18s ease}
+  .card,.themebtn,.lawnbar{transition:background-color .18s ease,border-color .18s ease}
+}
+.brand h1{font-family:var(--cond);font-weight:700;font-size:25px;letter-spacing:-.01em;margin:0}
+.brand .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.sub{font-size:12.5px;color:var(--muted);margin-top:3px}
+
+/* lawn switcher */
+.lawnbar{display:flex;align-items:center;gap:10px;width:100%;margin-top:11px;padding:9px 11px;
+  background:var(--card);border:1px solid var(--line);border-radius:10px;text-align:left;color:var(--ink)}
+.lawnbar .ln{font-family:var(--cond);font-size:15px;font-weight:700;line-height:1.15}
+.lawnbar .lm{font-family:var(--mono);font-size:11px;color:var(--muted);display:block;margin-top:1px}
+.lawnbar .lc{margin-left:auto;color:var(--muted);font-size:13px}
+.lawnrow{display:flex;align-items:center;gap:9px;padding:10px 10px;border:1px solid var(--line-soft);
+  border-radius:9px;margin-bottom:6px;background:var(--card)}
+.lawnrow.on{border-color:var(--chloro);background:var(--chloro-soft)}
+.lawnrow .pick{flex:1;text-align:left;background:none;border:none;padding:0;color:var(--ink);min-width:0}
+.lawnrow .pick b{display:block;font-family:var(--cond);font-size:15px;font-weight:700}
+.lawnrow .pick span{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:1px}
+.lawnrow .ic2{background:none;border:none;color:var(--muted);font-size:15px;padding:3px 5px;line-height:1}
+.newlawn{border-top:1px solid var(--line-soft);margin-top:12px;padding-top:12px}
+
+.card{background:var(--card);border:1px solid var(--card-line);border-radius:14px;padding:15px 15px 16px;margin-bottom:10px}
+.eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 11px;display:flex;align-items:center;gap:8px}
+h2{font-family:var(--cond);font-size:18px;font-weight:700;margin:0 0 4px}
+.hint{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+
+label{display:block;font-size:12.5px;font-weight:600;margin:0 0 4px}
+select,input[type=text],input,textarea{width:100%;font-family:var(--sans);font-size:15px;color:var(--ink);
+  padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);appearance:none}
+input[inputmode],.num{font-family:var(--mono)}
+input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;width:auto;margin:0;accent-color:var(--chloro)}
+.check{display:flex;align-items:flex-start;gap:9px}
+.check label{margin:0;font-weight:400;font-size:13px;line-height:1.4}
+.seg{display:flex;gap:3px;background:var(--line-soft);border-radius:9px;padding:3px}
+.seg button{flex:1;border:none;background:none;color:var(--muted);font-family:var(--sans);
+  font-size:13px;font-weight:500;padding:8px 6px;border-radius:7px;white-space:nowrap;
+  transition:background-color .14s,color .14s}
+.seg button[aria-pressed=true]{background:var(--card);color:var(--ink);font-weight:600;
+  box-shadow:0 1px 2px rgba(0,0,0,.10)}
+.slider{width:100%;height:6px;border-radius:5px;background:var(--line-soft);appearance:none;-webkit-appearance:none;margin:8px 0 0}
+.slider::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+  background:var(--chloro);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.slider::-moz-range-thumb{width:20px;height:20px;border:none;border-radius:50%;background:var(--chloro);cursor:pointer}
+.shareTip{margin-top:7px;padding:8px 10px;border-radius:9px;background:var(--frost-soft);
+  font-size:12px;color:var(--info-ink);display:flex;align-items:center;gap:8px}
+.shareTip button{flex:none;background:var(--frost);color:var(--on-chloro);border:none;
+  border-radius:7px;font-size:12px;font-weight:600;padding:5px 11px;cursor:pointer}
+.srcline{font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:2px}
+.srcline b{color:var(--ink);font-weight:600}
+.recon{border-radius:9px;padding:11px 12px;font-size:13px;line-height:1.45}
+.recon.ok{background:var(--chloro-soft);border:1px solid var(--ok-line);color:var(--ok-ink)}
+.recon.behind{background:var(--soil-soft);border:1px solid var(--warn-line);color:var(--warn-ink)}
+.recon.ahead{background:var(--frost-soft);border:1px solid var(--info-line);color:var(--info-ink)}
+.recon .n{font-family:var(--mono);font-weight:600}
+.mixgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mixgrid>div{border:1px solid var(--line-soft);border-radius:8px;padding:9px}
+.mixgrid .k{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mixgrid b{display:block;font-family:var(--mono);font-size:17px;font-weight:600;margin-top:2px;line-height:1.15}
+.mixgrid .u{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
+.band{position:relative;height:7px;border-radius:4px;overflow:hidden;margin:10px 0 3px;background:var(--line-soft)}
+.band i{position:absolute;top:0;height:100%;display:block}
+.band i.g{background:var(--chloro);opacity:.55}
+.band i.o{background:var(--frost);opacity:.45}
+.band i.e{background:var(--soil);opacity:.5}
+.band i.x{background:var(--danger);opacity:.5}
+.band b{position:absolute;top:-3px;width:3px;height:13px;border-radius:2px;background:var(--ink);
+  transform:translateX(-50%);box-shadow:0 0 0 1.5px var(--card)}
+.bandlab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--muted)}
+.sumcard{padding:11px 13px}
+.hero{padding-bottom:13px}
+.heroRow{display:flex;align-items:flex-end;gap:12px;margin-bottom:12px}
+.heroBig{font-family:var(--mono);font-size:38px;font-weight:600;letter-spacing:-.03em;line-height:.9}
+.heroUnit{font-size:12px;color:var(--muted);display:block;margin-top:5px}
+.heroSide{margin-left:auto;text-align:right}
+.heroSide b{display:block;font-family:var(--mono);font-size:16px;font-weight:600}
+.heroSide span{font-size:11px;color:var(--muted)}
+.heroStat{display:flex;align-items:center;gap:9px;margin-top:9px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.chip.ok{background:var(--chloro-soft);color:var(--ok-ink)}
+.chip.behind{background:var(--soil-soft);color:var(--warn-ink)}
+.chip.ahead{background:var(--frost-soft);color:var(--info-ink)}
+.chip.idle{background:var(--line-soft);color:var(--muted)}
+.disc{margin-top:12px;border-top:1px solid var(--line-soft);padding-top:10px}
+.disc summary{list-style:none;cursor:pointer;font-size:12px;color:var(--muted);
+  display:flex;align-items:center;gap:6px;user-select:none}
+.disc summary::-webkit-details-marker{display:none}
+.disc summary::after{content:"⌄";margin-left:auto;font-size:14px;line-height:1;transition:transform .18s}
+.disc[open] summary::after{transform:rotate(180deg)}
+.disc .body{margin-top:9px}
+.disc .body p{margin:0 0 7px}
+.flag{padding:10px 12px;border-radius:10px;font-size:12.5px}
+.sumline{display:flex;align-items:center;gap:10px}
+.sumline span{flex:1;font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.5}
+.sumline b{color:var(--ink);font-weight:600}
+.btn.sm{width:auto;padding:7px 13px;font-size:13px;flex:none}
+.setgrp{border-top:1px solid var(--line-soft);margin-top:14px;padding-top:12px}
+.setgrp .eyebrow{margin-bottom:10px}
+#editSheet .field:last-of-type{margin-bottom:0}
+
+/* home */
+.next{border:1px solid var(--ok-line);background:var(--chloro-soft);border-radius:10px;padding:13px}
+.next .when{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--chloro)}
+.next.overdue{border-color:var(--soil);background:var(--soil-soft)}
+.next.overdue .when{color:var(--warn-ink)}
+.nextbtns{display:flex;gap:8px;margin-top:2px}
+.nextbtns .btn{flex:none}
+.next .what{font-family:var(--cond);font-size:21px;font-weight:700;line-height:1.15;margin-top:3px}
+.next .sub{font-size:12.5px;color:var(--ok-sub);margin-top:3px}
+.next .mix{display:flex;gap:14px;margin-top:9px;flex-wrap:wrap;font-family:var(--mono);font-size:11.5px;color:var(--ok-sub)}
+.next .mix b{font-weight:600;color:var(--ok-strong)}
+.next button{margin-top:11px}
+.quiet{border:1px dashed var(--line);border-radius:10px;padding:14px;text-align:center;color:var(--muted);font-size:13.5px}
+.facts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.facts div{border:1px solid var(--line-soft);border-radius:8px;padding:8px 9px}
+.facts .k{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.facts b{display:block;font-family:var(--mono);font-size:15px;font-weight:600;margin-top:2px}
+.facts .u{display:block;font-size:10.5px;color:var(--muted)}
+.yearnav{display:flex;align-items:center;gap:7px;margin-left:auto}
+.yearnav button{background:var(--card);border:1px solid var(--line);color:var(--ink);
+  width:26px;height:26px;border-radius:7px;font-size:13px;line-height:1;padding:0}
+.yearnav button[disabled]{opacity:.3}
+.yearnav b{font-family:var(--mono);font-size:13px;font-weight:600;min-width:38px;text-align:center}
+.eyebrow.row{display:flex;align-items:center}
+.eyebrow.row::after{display:none}
+.pastnote{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px}
+.app.iron .lb b{font-weight:600}
+.app.iron .mk{color:#8A7563}
+.ironbar{display:flex;gap:8px;margin-top:10px}
+.ironbar div{flex:1;border:1px solid var(--line-soft);border-radius:8px;padding:8px 9px;font-family:var(--mono);font-size:11.5px}
+.ironbar b{display:block;font-size:15px;font-weight:600;margin-top:1px}
+
+/* season position */
+.pos{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.pos .wk{font-family:var(--cond);font-size:26px;font-weight:700;line-height:1}
+.pos .ph{font-size:13px;color:var(--muted)}
+.pos .off{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto}
+.timeline{position:relative;height:40px;margin:14px 0 2px}
+.timeline .track{position:absolute;top:20px;left:0;right:0;height:3px;background:var(--line-soft);border-radius:2px}
+.timeline .fill{position:absolute;top:20px;left:0;height:3px;background:var(--chloro);opacity:.3;border-radius:2px}
+/* today: a thin tick, drawn before the dots so they sit on top of it */
+.timeline .now{position:absolute;top:12px;height:18px;width:1.5px;background:var(--ink);
+  opacity:.5;transform:translateX(-50%);border-radius:1px}
+.timeline .lab{position:absolute;top:0;font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;
+  color:var(--muted);transform:translateX(-50%)}
+/* one size for every application; state is carried by colour, not bulk.
+   7px flat, no border - with 30+ dots the white ring just made them chunky. */
+.timeline i{position:absolute;top:18px;width:7px;height:7px;border-radius:50%;
+  transform:translateX(-50%);border:none;box-sizing:border-box}
+.timeline i.s-done{background:var(--chloro)}
+.timeline i.s-missed{background:var(--soil)}
+.timeline i.s-due{background:var(--ink)}
+.timeline i.s-upcoming{background:var(--dot-up)}
+.timeline i.s-pretrack{background:var(--dot-pre)}
+.tally{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap}
+.tally span{font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:99px;border:1px solid var(--line-soft)}
+.tally .d{background:var(--chloro-soft);border-color:var(--ok-line);color:var(--ok-ink)}
+.tally .m{background:var(--soil-soft);border-color:var(--warn-line);color:var(--warn-ink)}
+.tally .u{color:var(--muted)}
+
+/* application rows */
+.appgrp{margin-bottom:2px}
+details.appgrp>summary{list-style:none;cursor:pointer}
+details.appgrp>summary::-webkit-details-marker{display:none}
+.apphead{display:flex;align-items:baseline;gap:9px;padding:11px 0 6px;
+  border-bottom:1px solid var(--line-soft);margin-bottom:2px}
+.apphead .tot{margin-left:auto}
+.apphead::after{content:"⌄";font-size:13px;line-height:1;color:var(--muted);
+  transition:transform .18s;flex:none}
+details.appgrp[open]>summary .apphead::after{transform:rotate(180deg)}
+details.appgrp:not([open])>summary .apphead{border-bottom-color:transparent}
+.apphead .nm{font-family:var(--cond);font-size:14px;font-weight:700}
+.apphead .tot{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.app{display:grid;grid-template-columns:18px 46px 1fr auto;gap:9px;align-items:center;
+  padding:8px 8px 8px 4px;border-radius:8px;margin:1px 0}
+.app .mk{font-family:var(--mono);font-size:12px;text-align:center;line-height:1}
+.app .dt{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.app .lb{font-size:13px;min-width:0}
+.app .lb .sm{font-size:11.5px;color:var(--muted)}
+.app .ds{font-family:var(--mono);font-size:12.5px;font-weight:600;text-align:right;white-space:nowrap}
+.app .ds small{display:block;font-weight:400;font-size:10.5px;color:var(--muted)}
+.app.s-done{opacity:.72}
+.app.s-done .mk{color:var(--chloro)}
+.app.s-missed{background:var(--soil-soft)}
+.app.s-missed .mk{color:var(--soil)}
+.app.s-due{background:var(--ink);color:var(--on-ink)}
+.app.s-due .dt,.app.s-due .lb .sm,.app.s-due .ds small{color:var(--on-ink-soft)}
+.app.s-due .mk{color:var(--on-ink)}
+.app.s-pretrack{opacity:.42}
+.app.m-gran .dt::before{content:"▦ ";opacity:.55}
+.app.m-liq .dt::before{content:"◍ ";opacity:.55}
+.app.s-away{opacity:.5}
+.app.s-away .lb{text-decoration:line-through;text-decoration-color:var(--muted)}
+.app.s-overdue{background:var(--soil-soft)}
+.app.s-overdue .mk{color:var(--soil);font-weight:700}
+.app.s-skipped{opacity:.5}
+.app.s-skipped .lb{text-decoration:line-through;text-decoration-color:var(--muted)}
+.app.s-skipped .mk{color:var(--muted)}
+.app .box{width:16px;height:16px;margin:0;accent-color:var(--chloro);cursor:pointer}
+.timeline i.s-away{background:var(--dot-pre);box-shadow:inset 0 0 0 1.5px var(--muted)}
+.tally .a{color:var(--muted);text-decoration:line-through}
+.recon .sub{font-size:12px;opacity:.85;margin-top:4px}
+textarea{min-height:64px;resize:vertical}
+select:focus,input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--chloro);outline-offset:1px}
+.field{margin-bottom:11px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+button{font-family:var(--sans);cursor:pointer;border-radius:8px;font-size:14px}
+.btn{background:var(--chloro);color:var(--on-chloro);border:none;padding:11px 15px;font-weight:600;width:100%}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:var(--card);color:var(--danger);border:1px solid var(--danger-line)}
+.btn.sm{width:auto;padding:8px 13px;font-size:13px}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--tabs);
+  backdrop-filter:blur(8px);border-top:1px solid var(--line);
+  padding:7px 8px calc(7px + env(safe-area-inset-bottom));display:flex;gap:4px}
+nav.tabs button{flex:1;background:none;border:none;padding:8px 4px 6px;color:var(--muted);
+  font-family:var(--cond);font-weight:600;font-size:13px;border-radius:8px}
+nav.tabs button .ic{display:block;font-size:16px;line-height:1.2;margin-bottom:1px}
+nav.tabs button[aria-selected=true]{color:var(--chloro);background:var(--chloro-soft)}
+.panel[hidden]{display:none}
+
+.calbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.calbar .mo{font-family:var(--cond);font-size:18px;font-weight:700}
+.calbar .yr{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:6px}
+.navbtn{background:var(--card);border:1px solid var(--line);width:34px;height:34px;font-size:16px;color:var(--ink);line-height:1}
+.dow{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.06em;color:var(--muted);text-transform:uppercase;text-align:center;margin-bottom:4px}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.day{position:relative;aspect-ratio:1/1;border:1px solid var(--line-soft);border-radius:7px;background:var(--card);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0;
+  font-family:var(--mono);font-size:13px;color:var(--ink)}
+.day.out{background:transparent;border-color:transparent;color:var(--day-out)}
+.day.today{border-color:var(--chloro);border-width:1.5px}
+.day.plan::before{content:"";position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;
+  border:1.5px solid var(--chloro);box-sizing:border-box}
+.day.sel{background:var(--chloro);border-color:var(--chloro);color:var(--on-chloro)}
+.day.sel.plan::before{border-color:var(--on-chloro)}
+.day.sel .dots i{outline:1px solid var(--on-chloro-soft)}
+.dots{display:flex;gap:2.5px;height:5px;align-items:center}
+.dots i{width:5px;height:5px;border-radius:50%;display:block}
+.callegend{display:flex;gap:14px;font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:9px;align-items:center}
+.callegend .ring{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--chloro);display:inline-block}
+
+.entry{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+.entry:last-child{border-bottom:none}
+.entry .bar{width:3px;border-radius:2px;flex:none}
+.entry .body{flex:1;min-width:0}
+.entry .t{font-weight:600;font-size:14px}
+.entry .m{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.entry .n{font-size:13px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
+.entry .x{background:none;border:none;color:var(--muted);font-size:18px;padding:0 2px;line-height:1;align-self:flex-start}
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:18px 14px;text-align:center;
+  color:var(--muted);font-size:13.5px}
+
+.due{background:var(--chloro-soft);border:1px solid var(--ok-line);border-radius:9px;padding:11px 12px;margin-bottom:12px}
+.due .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--chloro)}
+.due .v{font-family:var(--cond);font-size:17px;font-weight:700;margin-top:2px}
+.due .s{font-size:12.5px;color:var(--ok-sub);margin-top:1px}
+.due button{margin-top:9px}
+
+.headline{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding:2px 0 10px;
+  border-bottom:1px solid var(--line-soft);margin-bottom:10px}
+.headline .big{font-family:var(--mono);font-size:31px;font-weight:600;letter-spacing:-.02em}
+.headline .unit{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.round{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.round:last-child{border-bottom:none}
+.round .when{font-family:var(--mono);font-size:12px;line-height:1.25}
+.round .when b{display:block;font-size:14px;font-weight:600}
+.round .what{font-size:13.5px}
+.round .what .why{color:var(--muted);font-size:12px}
+.round .dose{text-align:right;font-family:var(--mono);font-size:13px;font-weight:600;white-space:nowrap}
+.round .dose small{display:block;font-weight:400;font-size:11px;color:var(--muted)}
+
+.mgroup{margin-bottom:4px}
+.mhead{display:flex;align-items:baseline;justify-content:space-between;padding:9px 0 5px;
+  border-bottom:1px solid var(--line-soft)}
+.mhead .nm{font-family:var(--cond);font-size:14px;font-weight:700}
+.mhead .ph{font-size:11.5px;color:var(--muted)}
+.mhead .tot{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.mrow{display:grid;grid-template-columns:44px 1fr auto;gap:8px;padding:5px 0;
+  font-family:var(--mono);font-size:12.5px;align-items:baseline}
+.mrow .d{color:var(--muted)}
+.mrow .kg{font-weight:600}
+.mrow .g{color:var(--muted);font-size:11px;text-align:right}
+
+.flag{background:var(--soil-soft);border:1px solid var(--warn-line);border-radius:8px;padding:9px 11px;
+  font-size:12.5px;margin-top:9px;color:var(--warn-ink)}
+.flag b{font-weight:600}
+.flag.info{background:var(--frost-soft);border-color:var(--info-line);color:var(--info-ink)}
+.balance{display:flex;gap:8px;margin-top:10px}
+.balance div{flex:1;border:1px solid var(--line-soft);border-radius:8px;padding:8px 9px;
+  font-family:var(--mono);font-size:12px}
+.balance b{display:block;font-size:15px;font-weight:600}
+.balance .ok{color:var(--chloro)} .balance .off{color:var(--soil)}
+
+.chartwrap{margin:2px -4px 0}
+svg.chart{width:100%;height:auto;display:block;overflow:hidden}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:8px}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:11px;height:3px;border-radius:2px;display:block}
+.legend i.dot{width:8px;height:8px;border-radius:50%}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:4px}
+.stat{border:1px solid var(--line-soft);border-radius:8px;padding:9px 10px}
+.stat .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:var(--mono);font-size:19px;font-weight:600;margin-top:1px}
+.stat .s{font-size:11.5px;color:var(--muted)}
+.progress{height:7px;border-radius:4px;background:var(--line-soft);overflow:hidden;margin-top:8px}
+.progress i{display:block;height:100%;background:var(--chloro)}
+
+.scrim{position:fixed;inset:0;background:var(--shade);z-index:50}
+.scrim[hidden]{display:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;background:var(--card);
+  border-radius:16px 16px 0 0;border-top:1px solid var(--line);
+  padding:14px 16px calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+.sheet[hidden]{display:none}
+.sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px}
+.sheet h3{font-family:var(--cond);font-size:18px;margin:0 0 2px}
+.sheet .d{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-bottom:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:7px 12px;font-size:13px;color:var(--ink)}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.srcs{font-size:12px;color:var(--muted);line-height:1.55}
+.srcs a{color:var(--frost)}
+@media (prefers-reduced-motion:no-preference){
+  .sheet{animation:up .22s cubic-bezier(.2,.7,.3,1)}
+  @keyframes up{from{transform:translateY(14px);opacity:.4}to{transform:none;opacity:1}}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><h1>Plenlogg</h1><span class="tag">Nordic turf research</span>
+      <button class="themebtn" id="themeBtn" aria-label="Toggle dark mode" title="Toggle dark mode">◐</button>
+    </div>
+    <div class="sub">Log what you do. Get a fertiliser plan built on Nordic turfgrass research.</div>
+    <button class="lawnbar" id="lawnSwitch" aria-haspopup="dialog">
+      <span><span class="ln" id="lnName">My lawn</span><span class="lm" id="lnMeta">—</span></span>
+      <span class="lc">▾</span>
+    </button>
+  </header>
+
+  <!-- ============ HOME ============ -->
+  <section class="panel" id="p-home">
+    <div id="homeOut"></div>
+  </section>
+
+  <!-- ============ LOG ============ -->
+  <section class="panel" id="p-log" hidden>
+    <div class="card">
+      <div class="calbar">
+        <button class="navbtn" id="prevMo" aria-label="Previous month">‹</button>
+        <div><span class="mo" id="moName"></span><span class="yr" id="moYear"></span></div>
+        <button class="navbtn" id="nextMo" aria-label="Next month">›</button>
+      </div>
+      <div class="dow"><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div><div>Su</div></div>
+      <div class="days" id="days"></div>
+      <div class="callegend"><span><span class="ring"></span> fertiliser due</span><span>● work logged</span></div>
+    </div>
+
+    <div class="card">
+      <p class="eyebrow" id="dayLabel">Selected day</p>
+      <div id="dayPlan"></div>
+      <div id="dayEntries"></div>
+      <button class="btn" id="addBtn" style="margin-top:12px">Add work</button>
+    </div>
+  </section>
+
+  <!-- ============ PLAN ============ -->
+  <section class="panel" id="p-plan" hidden>
+    <div class="card sumcard">
+      <div class="sumline"><span id="planSummary">—</span>
+        <button class="btn ghost sm" id="editLawn">Edit</button></div>
+    </div>
+
+    <div class="card sumcard">
+      <div class="check"><input type="checkbox" id="repair2"><label for="repair2">Recovering from damage — feed 60% harder for six weeks</label></div>
+    </div>
+
+    <div id="planOut"></div>
+
+<div class="card">
+      <p class="eyebrow">Iron</p>
+      <div class="check"><input type="checkbox" id="ironOn"><label for="ironOn">Include iron in the plan</label></div>
+      <div class="grid2" id="ironFieldsPlan" hidden>
+        <div class="field"><label for="ironPurpose">What for</label>
+          <select id="ironPurpose">
+            <option value="nutrition">Nutrition — cover the requirement</option>
+            <option value="colour" selected>Colour, Nordic rate — subtle</option>
+            <option value="colorUS">Colour, US programme — visible green</option>
+            <option value="moss">Moss control</option>
+          </select></div>
+        <div class="field"><label for="ironFe">Iron content (% Fe)</label><input id="ironFe" inputmode="decimal" value="20.1"></div>
+      </div>
+      <div class="field" id="ironIntervalField" hidden><label for="ironInterval">How often</label>
+        <select id="ironInterval">
+          <option value="2">Every 2 weeks — strongest</option>
+          <option value="3" selected>Every 3 weeks</option>
+          <option value="4">Every 4 weeks — colour will dip between</option>
+        </select>
+      </div>
+      <p class="hint" id="ironHint">Jernvitriol (iron sulphate heptahydrate) is 20.1% Fe. Chelated products run 6–13%.</p>
+      <div id="ironOut"></div>
+    </div>
+
+    <div class="card">
+      <p class="eyebrow">Plenrens calculator</p>
+      <div class="grid2">
+        <div class="field"><label for="plenProd">Which Plenrens</label>
+          <select id="plenProd">
+            <option value="kons" selected>Konsentrat — sprayed</option>
+            <option value="gran">Granulat — spread dry</option>
+          </select></div>
+        <div class="field"><label for="plenArea">Area to treat (m²)</label>
+          <input id="plenArea" inputmode="decimal" placeholder="whole lawn"></div>
+      </div>
+      <p class="hint">Blank means the whole lawn. Spot-treating patches uses far less chemical.</p>
+    </div>
+
+    <div id="plenOut"></div>
+
+      </section>
+
+  <!-- ============ SEASON ============ -->
+  <section class="panel" id="p-season" hidden>
+    <div class="card">
+      <p class="eyebrow row">Season curve
+        <span class="yearnav">
+          <button id="yrPrev" aria-label="Previous season">‹</button>
+          <b id="seasonYear">—</b>
+          <button id="yrNext" aria-label="Next season">›</button>
+        </span>
+      </p>
+      <div class="chartwrap"><svg class="chart" id="chart" viewBox="0 0 340 210" role="img" aria-label="Planned nitrogen through the season against what you applied"></svg></div>
+      <div class="legend">
+        <span><i style="background:var(--chloro-soft);outline:1px solid var(--chloro)"></i>Planned N</span>
+        <span><i class="dot" style="background:var(--soil)"></i>You applied</span>
+        <span><i style="background:var(--frost)"></i>Mows/week</span>
+      </div>
+      <p class="hint">Start at 5–6 °C soil, peak at midsummer, ease off from 1 July as the soil releases its own nitrogen. Last feed about two weeks after the final mow.</p>
+    </div>
+
+    <div class="card">
+      <p class="eyebrow">Where you are</p>
+      <div class="stats" id="seasonStats"></div>
+      <div class="progress"><i id="seasonBar" style="width:0%"></i></div>
+      <div id="seasonFlags"></div>
+    </div>
+
+    <div class="card">
+      <p class="eyebrow">This year's work</p>
+      <div id="seasonCounts"></div>
+    </div>
+
+    <div class="card">
+      <p class="eyebrow">Where the numbers come from</p>
+      <p class="srcs">
+        Nitrogen rates, the 100 : 14 : 65 N : P : K ratio, species factors and the seasonal curve come from
+        <b>Precision Fertilisation — From theory to practice (STERF, 2021 update)</b> by Ericsson, Blombäck and
+        Kvalbein, revised by Hesselsøe, Aamlid and Borchert at NIBIO Landvik. The curve is calibrated so a
+        maximum-input southern lawn reproduces their three published rates: a 0.30 g N/m² starting dose,
+        a 0.75 peak, and 0.40 on 1 September.
+      </p>
+      <p class="srcs" style="margin-top:9px">
+        The autumn ceiling comes from STERF's autumn fertilisation trials. Beyond about 2.8 g N/m² after
+        1 September, nitrogen leaching climbed toward half of what was applied, creeping bentgrass lost roughly
+        10 °C of freezing tolerance, and snow mould increased four to five fold.
+      </p>
+      <p class="srcs" style="margin-top:9px">
+        <b>Two things that are mine, not STERF's:</b> their figures are for golf greens, so this app scales them
+        down for a garden lawn — higher cut, clippings usually left. And the spreader warning uses a practical
+        floor of about 5 g of product per m², below which most consumer broadcast spreaders cannot distribute
+        evenly. STERF makes the equipment point but does not publish that number.
+      </p>
+      <p class="srcs" style="margin-top:9px"><a href="https://sterf.org" target="_blank" rel="noopener">sterf.org</a></p>
+    </div>
+
+    <div class="card">
+      <p class="eyebrow">Data</p>
+      <button class="btn ghost" id="exportBtn">Export everything as JSON</button>
+      <button class="btn ghost" id="importBtn" style="margin-top:8px">Import from a backup</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <p class="hint">Export regularly. Clearing your browser data erases everything stored here.</p>
+      <button class="btn danger" id="clearBtn" style="margin-top:8px">Delete all entries</button>
+    </div>
+  </section>
+</div>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" aria-selected="true" data-tab="home"><span class="ic">◈</span>Home</button>
+  <button role="tab" aria-selected="false" data-tab="log"><span class="ic">▦</span>Log</button>
+  <button role="tab" aria-selected="false" data-tab="plan"><span class="ic">◇</span>Plan</button>
+  <button role="tab" aria-selected="false" data-tab="season"><span class="ic">◠</span>Season</button>
+</nav>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="scrim" id="lawnScrim" hidden></div>
+<div class="scrim" id="editScrim" hidden></div>
+<div class="sheet" id="editSheet" hidden role="dialog" aria-modal="true" aria-label="Edit lawn">
+  <div class="grab"></div>
+  <h3 id="editTitle">Edit lawn</h3>
+  <div class="d">Set once, then forget. Everything here shapes the plan.</div>
+  <div class="grid2">
+    <div class="field"><label for="lawnName">Name</label><input id="lawnName"></div>
+    <div class="field"><label for="area">Area (m²)</label><input id="area" inputmode="decimal" value="200"></div>
+  </div>
+
+  <div class="field"><label>Grade</label>
+    <div class="seg" id="grade" data-cur="family">
+      <button data-v="low">Low input</button><button data-v="family">Family lawn</button><button data-v="high">High input</button>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="field"><label for="region">Region</label>
+      <select id="region">
+        <option value="south">South / coastal</option>
+        <option value="inland">Inland &amp; Trøndelag</option>
+        <option value="north">North / mountain</option>
+      </select></div>
+    <div class="field"><label>Light</label>
+      <div class="seg" id="shade" data-cur="sun">
+        <button data-v="sun">Sun</button><button data-v="part">Part</button><button data-v="deep">Shade</button>
+      </div></div>
+  </div>
+
+  <div class="check" style="margin-bottom:14px"><input type="checkbox" id="clipBox"><label for="clipBox">I collect the clippings</label></div>
+
+  <div class="field"><label>Applied as</label>
+    <div class="seg" id="form" data-cur="gran">
+      <button data-v="gran">Granular</button><button data-v="liq">Liquid</button><button data-v="combi">Combination</button>
+    </div>
+  </div>
+
+  <div id="granBlock">
+    <div class="grid2">
+      <div class="field"><label id="granCadLabel">Rounds per season</label>
+        <div class="seg" id="granCad" data-cur="4">
+          <button data-v="4">4 times</button><button data-v="5">5 times</button><button data-v="6">6 times</button>
+        </div></div>
+      <div class="field"><label for="npk" id="npkLabel">Fertiliser</label><input id="npk" value="14-3-15"></div>
+    </div>
+  </div>
+
+  <div id="liqBlock" hidden>
+    <div class="grid2">
+      <div class="field"><label id="cadLabel">Feed every</label>
+        <div class="seg" id="cadence" data-cur="biweekly">
+          <button data-v="weekly">Every week</button><button data-v="biweekly">2 weeks</button>
+        </div></div>
+      <div class="field"><label for="npkLiq" id="npkLiqLabel">Fertiliser</label><input id="npkLiq" value="15-0-0"></div>
+    </div>
+  </div>
+
+  <div class="field" id="shareField" hidden>
+    <label>Nitrogen from granular <span id="shareVal" class="num">50%</span></label>
+    <input type="range" id="granShare" min="10" max="90" step="5" value="50" class="slider">
+    <div id="shareHint" class="hint" style="margin-top:6px"></div>
+  </div>
+
+  <div class="field" id="volFields" hidden>
+    <label for="sprayVol">Water per application (L)</label>
+    <input id="sprayVol" inputmode="decimal" placeholder="auto">
+    <div class="hint" id="volEcho" style="margin-top:4px"></div>
+  </div>
+
+  <details class="disc"><summary>Advanced</summary><div class="body">
+    <div class="field"><label for="soil">Soil</label>
+      <select id="soil"><option value="sand">Sandy</option><option value="loam" selected>Loam</option><option value="rich">Old / organic</option></select></div>
+    <div class="grid2" id="sprayFields" hidden>
+      <div class="field"><label for="uptake">Aiming for</label>
+        <select id="uptake"><option value="leaf">Leaf uptake</option><option value="soil">Soil uptake</option></select></div>
+      <div class="field"><label for="tank">Sprayer tank (L)</label><input id="tank" inputmode="decimal" value="15"></div>
+    </div>
+    <div class="field"><label for="oxide">N-P-K label style</label>
+      <select id="oxide"><option value="elem">Elemental P and K</option><option value="ox">P₂O₅ and K₂O</option></select></div>
+    <div class="check" id="slowField" style="margin-top:12px"><input type="checkbox" id="slowRel"><label for="slowRel">Slow / controlled-release granular — allows bigger, fewer rounds</label></div>
+  </div></details>
+
+  <button class="btn" id="editDone" style="margin-top:12px">Done</button>
+</div>
+<div class="scrim" id="impScrim" hidden></div>
+<div class="sheet" id="impSheet" hidden role="dialog" aria-modal="true" aria-label="Import backup">
+  <div class="grab"></div>
+  <h3>Import backup</h3>
+  <div class="d" id="impSummary"></div>
+  <button class="btn" id="impAdd">Add to my lawns</button>
+  <button class="btn ghost" id="impReplace" style="margin-top:8px">Replace everything</button>
+  <button class="btn ghost" id="impCancel" style="margin-top:8px">Cancel</button>
+</div>
+<div class="sheet" id="lawnSheet" hidden role="dialog" aria-modal="true" aria-label="Choose lawn">
+  <div class="grab"></div>
+  <h3>Your lawns</h3>
+  <div class="d">Each lawn keeps its own settings, plan and log.</div>
+  <div id="lawnList"></div>
+  <div class="newlawn">
+    <div class="field"><label for="l_name">Add a lawn</label><input id="l_name" placeholder="Name"></div>
+    <div class="grid2">
+      <div class="field"><label for="l_area">Area (m²)</label><input id="l_area" inputmode="decimal" placeholder="200"></div>
+      <div class="field"><label for="l_region">Where</label>
+        <select id="l_region">
+          <option value="south">South / coastal</option>
+          <option value="inland">Inland &amp; Trøndelag</option>
+          <option value="north">North / mountain</option>
+        </select></div>
+    </div>
+    <button class="btn" id="l_add">Add lawn</button>
+    <p class="hint">Everything else takes a sensible default — you can adjust it later under Edit.</p>
+  </div>
+  <button class="btn ghost" id="lawnClose" style="margin-top:10px">Close</button>
+</div>
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-label="Add work">
+  <div class="grab"></div>
+  <h3 id="sheetTitle">Add work</h3>
+  <div class="d" id="sheetDate"></div>
+  <div class="chips" id="typeChips"></div>
+  <div id="fertFields" hidden>
+    <div class="grid2">
+      <div class="field"><label for="fKg">Fertiliser used (kg)</label><input id="fKg" inputmode="decimal" placeholder="4.0"><div class="hint" id="fKgEcho" style="margin-top:4px"></div></div>
+      <div class="field"><label for="fNpk">N-P-K</label><input id="fNpk" placeholder="14-3-15"></div>
+    </div>
+  </div>
+  <div id="ironFields" hidden>
+    <div class="grid2">
+      <div class="field"><label for="iG">Product used (g)</label><input id="iG" inputmode="decimal" placeholder="12"></div>
+      <div class="field"><label for="iFe">Iron content (% Fe)</label><input id="iFe" inputmode="decimal" placeholder="20.1"></div>
+    </div>
+  </div>
+  <div id="soilFields" hidden>
+    <div class="field"><label for="sTemp">Soil temperature at 5 cm (°C)</label><input id="sTemp" inputmode="decimal" placeholder="6.0">
+      <div class="hint" id="sTempEcho" style="margin-top:4px"></div></div>
+  </div>
+  <div id="mowFields" hidden>
+    <div class="field"><label for="mHt">Cutting height (mm)</label><input id="mHt" inputmode="decimal" placeholder="40"></div>
+  </div>
+  <div class="field"><label for="note">Notes</label><textarea id="note" placeholder="Optional"></textarea></div>
+  <button class="btn" id="saveEntry">Save</button>
+  <button class="btn ghost" id="cancelEntry" style="margin-top:8px">Cancel</button>
+</div>
+
+<script>
+/* ============================================================
+   Storage — Claude artifact storage, then localStorage, then memory.
+   ============================================================ */
+const KEY='plenlogg:v3', LEGACY='plenlogg:v2';
+const mem={};
+const Store={
+  async raw(k){
+    if(window.storage&&window.storage.get){
+      try{const r=await window.storage.get(k,false);if(r&&r.value)return JSON.parse(r.value);}catch(e){}
+    }
+    try{const v=localStorage.getItem(k);if(v)return JSON.parse(v);}catch(e){}
+    return mem[k]||null;
+  },
+  async get(){ return (await this.raw(KEY)) || (await this.raw(LEGACY)); },
+  async set(obj){
+    const str=JSON.stringify(obj); mem[KEY]=obj;
+    if(window.storage&&window.storage.set){try{await window.storage.set(KEY,str,false);return;}catch(e){}}
+    try{localStorage.setItem(KEY,str);}catch(e){}
+  }
+};
+
+/* ============================================================
+   State
+   ============================================================ */
+const TYPES=[
+  {id:'mow',label:'Mowing',color:'#6E8B7A'},
+  {id:'fert',label:'Fertilising',color:'#2E7D4F'},
+  {id:'water',label:'Watering',color:'#4F7C93'},
+  {id:'scar',label:'Scarifying',color:'#A9652E'},
+  {id:'aer',label:'Aerating',color:'#7A5C3E'},
+  {id:'seed',label:'Overseeding',color:'#B08A1E'},
+  {id:'lime',label:'Liming',color:'#8E8E9C'},
+  {id:'weed',label:'Weed control',color:'#9A4B4B'},
+  {id:'top',label:'Topdressing',color:'#6B6B4E'},
+  {id:'iron',label:'Iron',color:'#7D6B5D'},
+  {id:'soil',label:'Soil temperature',color:'#7E9AA8'},
+  {id:'note',label:'Observation',color:'#5C6B60'}
+];
+const T=id=>TYPES.find(t=>t.id===id)||TYPES[9];
+
+const DEFAULTS={area:200,region:'south',clip:'mulch',
+  shade:'sun',grade:'family',soil:'loam',cadence:'biweekly',npkLiq:'15-0-0',granShare:50,rounds:4,form:'gran',slowRel:false,npk:'14-3-15',oxide:'elem',repair:false,uptake:'leaf',tank:15,plenProd:'kons',plenArea:0,away:[],skips:[],sprayVol:0,
+  ironOn:false,ironPurpose:'colour',ironFe:20.1,ironInterval:3};
+
+const uid=()=>Math.random().toString(36).slice(2,9);
+function newLawn(name){return {id:uid(),name:name||'My lawn',settings:{...DEFAULTS},entries:[]};}
+
+let store={v:3,activeId:null,lawns:[]};
+let state=newLawn();          // always points at the active lawn
+let viewYear=new Date().getFullYear();
+
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  const b=document.getElementById('themeBtn');
+  if(b){ b.textContent = t==='dark'?'☀':'☾';
+         b.setAttribute('aria-label', t==='dark'?'Switch to light mode':'Switch to dark mode'); }
+}
+function loadStore(saved){
+  if(saved&&Array.isArray(saved.lawns)&&saved.lawns.length){
+    store={v:3,activeId:saved.activeId,lawns:saved.lawns,theme:saved.theme};
+  }else if(saved&&saved.settings){
+    // migrate the single-lawn format
+    const l=newLawn('My lawn');
+    l.settings={...DEFAULTS,...saved.settings};
+    l.entries=saved.entries||[];
+    store={v:3,activeId:l.id,lawns:[l]};
+  }else{
+    const l=newLawn('My lawn');
+    store={v:3,activeId:l.id,lawns:[l]};
+  }
+  store.lawns.forEach(l=>{ l.settings={...DEFAULTS,...(l.settings||{})}; l.entries=l.entries||[];
+    if(!Array.isArray(l.settings.away)) l.settings.away=[];
+    if(!l.settings.grade){
+      // fold the old species × ambition pair into the nearest single grade
+      const SP={fast:1.05,mix:0.85,fescue:0.60}, AM={show:1.00,family:0.80,low:0.55};
+      const f=(SP[l.settings.species]||0.85)*(AM[l.settings.ambition]||0.80);
+      l.settings.grade=Object.keys(GRADE).sort((a,b)=>
+        Math.abs(GRADE[a]-f)-Math.abs(GRADE[b]-f))[0];
+    }
+    delete l.settings.species; delete l.settings.ambition; });
+  if(!store.lawns.some(l=>l.id===store.activeId)) store.activeId=store.lawns[0].id;
+  state=store.lawns.find(l=>l.id===store.activeId);
+  // no stored preference yet: follow the system
+  store.theme = (saved&&saved.theme) ? saved.theme
+    : (window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  applyTheme(store.theme);
+}
+function switchLawn(id){
+  if(!store.lawns.some(l=>l.id===id)) return;
+  store.activeId=id;
+  state=store.lawns.find(l=>l.id===id);
+  save(); writeSettings(); refreshPlan();
+  renderLawnBar(); renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
+}
+let plan=null;                 // cached computed plan
+let planByDate=new Map();      // iso -> round
+let view=new Date(); view.setDate(1);
+let selected=iso(new Date());
+let draftType='mow', draftKg=null, editingId=null;
+
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function parseISO(s){const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c)}
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_S=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* ============================================================
+   Model
+   Season windows and annual totals follow STERF Fig. 13:
+   15 g N/m²/yr southern, 12 northern. Curve shape calibrated so
+   the maximum southern case reproduces their published
+   0.30 start / 0.75 peak / 0.40 on 1 Sep weekly rates.
+   ============================================================ */
+const REGION={
+  south: {base:15.0,start:13,end:46,name:'South / coastal'},
+  inland:{base:13.5,start:15,end:44,name:'Inland & Trøndelag'},
+  north: {base:12.0,start:18,end:42,name:'North / mountain'}
+};
+/* One grade replaces the old species × ambition pair. They moved the target
+   by 53% and 56% with near-identical spreads — the same question twice. */
+const GRADE={low:0.44,family:0.67,high:0.98};
+const isLiq=f=>f==='liq'||f==='combi';   // combination sprays too, for now
+const CLIP={mulch:0.75,remove:1.00};
+const SHADE={sun:1.00,part:0.85,deep:0.70};
+const SOILF={sand:1.05,loam:1.00,rich:0.90};
+const AUTUMN_CAP=2.8;      // g N/m² after 1 Sep — STERF autumn trials
+const MAX_DOSE=3.0;        // g N/m² in one quick-release granular application
+/* A coated / controlled-release granular meters its nitrogen out over weeks,
+   so a single application can safely carry far more than a quick bag. Research
+   on polymer-coated urea clusters around 4–9 g N/m²; 6 is a safe garden ceiling.
+   Because the release tail also feeds through early autumn, the after-1-Sep
+   window can hold a little more too. */
+const SLOW_MAX_DOSE=6.0;   // g N/m² in one slow-release granular application
+const SLOW_AUTUMN_CAP=3.6; // g N/m² after 1 Sep when slow-release
+const SLOW_WEEKS=8;        // how long a slow-release round keeps feeding
+const isSlow=s=>!!s.slowRel && s.form!=='liq';
+const MIN_SPREAD=5.0;      // g product/m² — practical floor for garden spreaders
+const MIN_GRAN_N=0.5;      // g N/m² minimum per granular round — below this it is too little to spread evenly
+/* Spray water. The foliar ceiling is the Illinois recommendation of no more
+   than 40 gallons/acre with flat-fan nozzles (~37 mL/m²); the low-rate figure
+   is USGA's 0.1 lb N/1000 sq ft (~0.49 g N/m²). The soil-route volumes and the
+   burn threshold below are practical rules of thumb, not published figures. */
+const SPRAY={
+  leaf:{def:25,max:37,label:'Leaf uptake'},
+  soil:{def:100,max:160,label:'Soil uptake'}
+};
+const MAX_N_CONC=15;    // g N per litre of tank mix before scorch risk
+/* Tank strength bands, g N per litre. 8 is where greens sit when watering in;
+   13 is USGA's own combination of 0.1 lb N/1000 sq ft in 40 gal/acre; 15 is the
+   ceiling, roughly 3% urea, past which turf practice does not go. */
+const CONC_GOOD=8, CONC_OK=13;
+const FOLIAR_MAX_N=0.5; // g N/m² the leaf can take up in one pass
+const FOLIAR_SPLIT=0.6; // above this, split a foliar pass into two-or-more sub-passes that week
+const OVERDUE_DAYS=3;   // a feed past its date stays 'overdue' (actionable) this many days before it counts as missed
+/* Plenrens. Two products share the name and only one can be sprayed.
+   Konsentrat (reg. 2013.21.17): MCPA 78, dichlorprop-P 22.5, dicamba 4.8 g/l.
+   Label: 40 ml per litre, 500 ml in 12.5 L covers 250 m2 -> 2 ml and 50 mL water per m2.
+   Granulat (reg. 2006.17.17): iron(II) sulphate 180, MCPA 5, mecoprop-P 3 g/kg,
+   plus N 140, P 10, K 30 g/kg, spread dry at 35 g/m2. */
+const PLENRENS={
+  kons:{label:'Konsentrat — sprayed',mlPerM2:2,waterMlPerM2:50,mixMlPerL:40,bottleMl:500,
+        newLawnMonths:'4–6'},
+  gran:{label:'Granulat — spread dry',gPerM2:35,npk:'14-1-3',
+        nPerM2:4.9,fePerM2:6.3,newLawnMonths:'6'}
+};
+/* Iron. NIBIO's rates, published by Mattilsynet, per 100 m2 per year:
+   7-14 g iron(II) sulphate to cover the nutritional need, 20-40 g for a
+   stronger green, 280-390 g to deal with moss. Held here as g FeSO4 per m2.
+   A fertiliser product going past 100 g/100 m2 must be documented, and
+   moss-control quantities require plant-protection approval. */
+const IRON={
+  nutrition:{label:'Nutrition',lo:0.07,hi:0.14,apps:3,ml:30},
+  colour:   {label:'Colour, Nordic rate',lo:0.20,hi:0.40,apps:5,ml:30},
+  /* US turf practice: 2-3 oz of 20% product per 1000 sq ft in 3-5 gallons of
+     water, i.e. 0.61-0.91 g FeSO4 and 122-204 mL water per m2, repeated every
+     2-4 weeks. Rate-per-application, not an annual allowance. */
+  colorUS:  {label:'Colour, US programme',perApp:0.75,ml:150,us:true},
+  moss:     {label:'Moss control',lo:2.8,hi:3.9,apps:2,ml:60}
+};
+const IRON_FE=20.1;      // % Fe in iron(II) sulphate heptahydrate
+const IRON_LEGAL=1.0;    // g FeSO4/m2/yr — fertiliser above this needs documenting
+const IRON_MAX_CONC=50;  // g product per litre — rule of thumb, not a published figure
+const GROWIN_WEEKS=8;     // STERF: 6-10 week grow-in at roughly double the rate
+const GROWIN_MULT=2.0;
+const REPAIR_MULT=1.6;    // STERF: dose may be raised 60% when repair is needed
+const REPAIR_WEEKS=6;
+const SHAPE={lo:0.40,peakA:24,peakB:26,sep:0.53,sepWk:35};
+
+function parseNPK(str,oxide){
+  const p=String(str||'').split(/[-–/ ]+/).map(parseFloat).filter(x=>!isNaN(x));
+  let n=p[0]||0,ph=p[1]||0,k=p[2]||0;
+  if(oxide==='ox'){ph*=0.4364;k*=0.8301;}
+  return {n,p:ph,k};
+}
+/* A round owns its whole week. The Sunday is the deadline shown to the user;
+   the Monday opens the window. Judging from the Monday made a round look
+   missed on the Tuesday of the very week it was meant to be done in. */
+function isoWeekSunday(week,year){
+  return new Date(isoWeekMonday(week,year).getTime()+6*86400000);
+}
+/* Distance from a logged date to the round's week: zero anywhere inside it. */
+function distToWeek(t,a,b){ return t<a ? a-t : (t>b ? t-b : 0); }
+function isoWeekMonday(week,year){
+  const jan4=new Date(year,0,4), dow=(jan4.getDay()+6)%7;
+  const wk1=new Date(year,0,4-dow);
+  return new Date(wk1.getTime()+(week-1)*7*86400000);
+}
+function isoWeekOf(d){
+  const t=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  t.setDate(t.getDate()+3-((t.getDay()+6)%7));
+  const wk1=new Date(t.getFullYear(),0,4);
+  return 1+Math.round(((t-wk1)/86400000-3+((wk1.getDay()+6)%7))/7);
+}
+/* Fertiliser quantities swing from a few grams on a weekly schedule to
+   several kilos on big rounds. Show whichever unit reads naturally. */
+function mass(kg){
+  if(!isFinite(kg)||kg<=0) return '0 g';
+  if(kg>=1) return kg.toFixed(kg<10?1:0)+' kg';
+  const g=kg*1000;
+  return (g<10?g.toFixed(1):Math.round(g))+' g';
+}
+function vol(l){
+  if(!isFinite(l)||l<=0) return '0 L';
+  if(l>=10) return l.toFixed(0)+' L';
+  if(l>=1)  return l.toFixed(1)+' L';
+  return Math.round(l*1000)+' mL';
+}
+/* Nitrogen per m2 depends on lawn area, so it must not be frozen into the
+   entry when it is logged. Correcting the area later would otherwise leave
+   every past entry wrong while still displaying the right kilos — the plan
+   then reads as a shortfall and inflates the remaining doses. Derive it from
+   the stored kilos and analysis instead, against the current area. */
+function entryGN(e,s){
+  if(!e||e.type!=='fert') return 0;
+  if(e.kg>0&&s&&s.area>0){
+    // the entry's own analysis first, then the lawn's, then whatever was stored
+    let n=parseNPK(e.npk,s.oxide).n;
+    if(!(n>0)) n=parseNPK(s.npk,s.oxide).n;
+    if(n>0) return e.kg*1000*(n/100)/s.area;
+  }
+  return e.gN||0;
+}
+function entryFeSO4(e,s){
+  if(!e||e.type!=='iron') return 0;
+  if(e.g>0&&s&&s.area>0){
+    const fe=Number(e.fePct)||IRON_FE;
+    return (e.g*(fe/100)/s.area)/(IRON_FE/100);
+  }
+  return e.gFeSO4||0;
+}
+function phaseOf(wk){
+  if(wk<SHAPE.peakA) return 'building up';
+  if(wk<=SHAPE.peakB) return 'peak growth';
+  if(wk<=SHAPE.sepWk) return 'easing off';
+  return 'autumn taper';
+}
+
+/* The season no longer runs on the calendar alone. A logged spring soil
+   reading sets the real start; a logged final mow closes the far end. */
+function seasonWindow(s,entries,year,today){
+  const R=REGION[s.region];
+  let start=R.start,end=R.end,startSrc=null,endSrc=null;
+
+  const soils=entries.filter(e=>e.type==='soil'&&e.date.startsWith(year)&&typeof e.temp==='number')
+                     .sort((a,b)=>a.date<b.date?-1:1);
+  const trig=soils.find(e=>{const w=isoWeekOf(parseISO(e.date));return e.temp>=5&&w>=8&&w<=26;});
+  if(trig){
+    start=Math.min(26,Math.max(8,isoWeekOf(parseISO(trig.date))));
+    startSrc={date:trig.date,temp:trig.temp};
+  }
+
+  const mows=entries.filter(e=>e.type==='mow'&&e.date.startsWith(year)).map(e=>e.date).sort();
+  if(mows.length){
+    const last=mows[mows.length-1], lw=isoWeekOf(parseISO(last));
+    const stopped=(today.getTime()-parseISO(last).getTime())/86400000>=14;
+    if(lw>=34&&stopped){ end=Math.min(52,lw+2); endSrc={date:last}; }
+  }
+  if(end<start+6) end=start+6;
+  return {R,start,end,startSrc,endSrc};
+}
+
+function computePlan(s,entries,yearOpt){
+  entries=entries||[];
+  const Y=Number(yearOpt)||new Date().getFullYear();
+  const year=String(Y), flags=[];
+  /* Viewing a past season: treat "now" as the end of that year so every round
+     resolves to done or missed. A future one: treat it as the start. */
+  const realNow=new Date(); realNow.setHours(0,0,0,0);
+  const jan1=new Date(Y,0,1), dec31=new Date(Y,11,31);
+  const today=realNow<jan1?jan1:(realNow>dec31?dec31:realNow);
+  const isCurrentYear=realNow>=jan1&&realNow<=dec31;
+  const {R,start,end,startSrc,endSrc}=seasonWindow(s,entries,year,today);
+  const slow=isSlow(s);
+  const maxDose=slow?SLOW_MAX_DOSE:MAX_DOSE;
+  const autCap=slow?SLOW_AUTUMN_CAP:AUTUMN_CAP;
+  /* ISO week 35 drifts up to eight days against 1 September, so the ceiling
+     was starting early in some years. Anchor it to the real date instead.
+     SHAPE.sepWk stays as it is — that one is a curve-shape knob, calibrated
+     to reproduce the published weekly rates, not a calendar boundary. */
+  const autWk=isoWeekOf(new Date(Y,8,1));
+
+  const raw=R.base*(GRADE[s.grade]||GRADE.family)*CLIP[s.clip]*SHADE[s.shade]*SOILF[s.soil];
+  const annual=Math.min(15,Math.max(4,raw));
+  const clamped=Math.abs(annual-raw)>0.05?raw:null;
+
+  // --- weekly curve over the real season window ---
+  function shapeFor(a,b){
+    const out=new Array(54).fill(0);
+    for(let i=a;i<=b;i++){
+      let v;
+      if(i<SHAPE.peakA)       v=SHAPE.lo+(1-SHAPE.lo)*(i-a)/Math.max(1,SHAPE.peakA-a);
+      else if(i<=SHAPE.peakB) v=1;
+      else if(i<=SHAPE.sepWk) v=1-(1-SHAPE.sep)*(i-SHAPE.peakB)/Math.max(1,SHAPE.sepWk-SHAPE.peakB);
+      else                    v=SHAPE.sep*(1-(i-SHAPE.sepWk)/Math.max(1,b-SHAPE.sepWk));
+      out[i]=Math.max(0,v);
+    }
+    return out;
+  }
+  /* Anchor the curve to its midsummer rate, not to the annual total. The grass
+     needs the same amount in July whether the season opened in March or May, so
+     a longer season should add nitrogen at the edges rather than thin the peak.
+     With a standard season this is identical to normalising on the total. */
+  const ref=shapeFor(R.start,R.end);
+  const refTot=ref.reduce((a,b)=>a+b,0)||1;
+  const peakRate=Math.max(...ref)/refTot*annual;
+
+  const w=shapeFor(start,end);
+  const curPeak=Math.max(...w)||1;
+  for(let i=0;i<54;i++) w[i]=w[i]/curPeak*peakRate;
+
+  // --- grow-in and repair lift the requirement above maintenance ---
+  const boost=new Array(54).fill(1), growWeeks=new Set();
+  entries.filter(e=>e.type==='seed'&&e.date.startsWith(year)).forEach(e=>{
+    const w0=isoWeekOf(parseISO(e.date));
+    for(let i=w0;i<w0+GROWIN_WEEKS&&i<54;i++){ boost[i]=Math.max(boost[i],GROWIN_MULT); growWeeks.add(i); }
+  });
+  const nowW=isoWeekOf(today);
+  if(s.repair&&isCurrentYear) for(let i=nowW;i<Math.min(54,nowW+REPAIR_WEEKS);i++) boost[i]=Math.max(boost[i],REPAIR_MULT);
+  for(let i=0;i<54;i++) w[i]*=boost[i];
+  const target=w.reduce((a,b)=>a+b,0);
+  const boosted=target-annual;
+
+  if(growWeeks.size) flags.push({t:'info',h:'Grow-in rate.',
+    b:'New grass is fed at '+GROWIN_MULT+'× the normal rate for '+GROWIN_WEEKS+
+      ' weeks — seedlings need roughly double while they establish.'});
+  if(s.repair) flags.push({t:'info',h:'Repair rate.',
+    b:'Raised '+Math.round((REPAIR_MULT-1)*100)+'% for '+REPAIR_WEEKS+
+      ' weeks. Use more of the same fertiliser rather than a higher-N one.'});
+
+  // --- autumn ceiling, applied after any boost ---
+  let aut=w.slice(autWk).reduce((a,b)=>a+b,0);
+  if(aut>autCap){
+    const excess=aut-autCap, f=autCap/aut;
+    for(let i=autWk;i<54;i++) w[i]*=f;
+    const pre=w.slice(0,autWk).reduce((a,b)=>a+b,0);
+    if(pre>0) for(let i=0;i<autWk;i++) w[i]+=excess*(w[i]/pre);
+    aut=autCap;
+    const lateSeed=[...growWeeks].some(k=>k>=autWk);
+    flags.push({t:'warn',h:lateSeed?'Autumn seeding meets the autumn ceiling.':'Autumn capped.',
+      b:lateSeed
+        ? 'Seedlings want feeding just as the winter-hardiness limit says stop. Held to '+autCap+' g N/m². That limit was measured on established turf, not seedlings — if cover is thin, more nitrogen may be worth the snow-mould risk. Your call.'
+        : (slow
+          ? 'Autumn nitrogen held to '+autCap+' g N/m². Slow-release runs a little higher than a quick bag because the coating meters it out rather than dumping it — but the release tail still counts, so the ceiling holds.'
+          : 'Nitrogen after 1 September held to '+autCap+' g N/m², surplus moved into summer. Beyond that it leaches, weakens frost tolerance and invites snow mould.')});
+  }
+
+  // --- split into applications ---
+  /* Equal stretches of time, each round carrying the nitrogen its stretch holds. */
+  function byRounds(nR,weights,total){
+    const out=[];
+    /* Divide the WHOLE season into N equal-time windows so every week's
+       requirement is captured and the total conserves. Each round carries its
+       window's nitrogen, placed at the window's weight-median.
+       Slow-release changes only the placement DATE: because the coating keeps
+       feeding for weeks, a round's date is pulled no later than SLOW_WEEKS
+       before season end — it goes down earlier and releases through the tail.
+       The nitrogen per round is identical to quick-release; only timing moves. */
+    const span=end-start+1;
+    const latestDate = slow ? Math.max(start, end-SLOW_WEEKS) : end;
+    for(let k=0;k<nR;k++){
+      const a=start+Math.round(k*span/nR);
+      const b=Math.min(end,start+Math.round((k+1)*span/nR)-1);
+      if(b<a) continue;
+      let g=0; for(let j=a;j<=b;j++) g+=weights[j];
+      if(g<=0.0005) continue;
+      let acc=0,mid=a;
+      for(let j=a;j<=b;j++){ acc+=weights[j]; if(acc>=g/2){ mid=j; break; } }
+      mid=Math.min(mid,latestDate);   // slow-release rounds cannot land in the tail
+      out.push({week:mid,gN:g});
+    }
+    const sum=out.reduce((x,r)=>x+r.gN,0)||1;
+    if(total!=null) out.forEach(r=>{r.gN=r.gN/sum*total;});
+    /* A granular round below the minimum is not worth a trip to the shed.
+       Fold it into the previous round rather than leaving a tiny trailing pass. */
+    let changed=true;
+    while(changed){
+      changed=false;
+      for(let i=out.length-1;i>=0;i--){
+        if(out[i].gN<MIN_GRAN_N&&out.length>1){
+          const prev=i>0?i-1:1;
+          out[prev].gN+=out[i].gN;
+          out.splice(i,1);
+          changed=true; break;
+        }
+      }
+    }
+    return out;
+  }
+  function byInterval(step,weights,total,skip){
+    const out=[];
+    for(let i=start;i<=end;i+=step){
+      if(skip&&skip.has(i)) continue;
+      let g=0; for(let j=i;j<=Math.min(i+step-1,end);j++) g+=weights[j];
+      if(g>0.0005) out.push({week:i,gN:g});
+    }
+    const sum=out.reduce((x,r)=>x+r.gN,0)||1;
+    if(total!=null) out.forEach(r=>{r.gN=r.gN/sum*total;});
+    return out;
+  }
+
+  /* Foliar split: a leaf pass over FOLIAR_SPLIT g N/m² is more than the leaf
+     can take up at once, so break it into the fewest equal sub-passes that each
+     land under the threshold, spaced across the week. Soil-route feeds water in
+     and are not subject to the leaf ceiling, so they are left whole. */
+  function splitFoliar(list){
+    if(s.uptake!=='leaf') return list;
+    const out=[];
+    for(const r of list){
+      if(r.method!=='liq'||r.gN<=FOLIAR_SPLIT){ out.push(r); continue; }
+      const n=Math.ceil(r.gN/FOLIAR_SPLIT);          // 2 in almost every case
+      for(let k=0;k<n;k++) out.push({...r,gN:r.gN/n,split:{k,n}});
+    }
+    return out;
+  }
+
+  const rounds=[];
+  if(s.form==='combi'){
+    /* A granular base carries part of the year; liquid tops up between rounds.
+       With a QUICK bag, spreading and spraying the same week double-spikes that
+       week's nitrogen, so liquid skips any week a granular round lands on —
+       one job per week. With SLOW-release the granular round is not a spike but
+       the front of a weeks-long release, so a liquid pass on top is fine; the
+       skip is dropped and liquid keeps its steady interval. */
+    const share=Math.min(0.9,Math.max(0.1,(Number(s.granShare)||50)/100));
+    const gran=byRounds(Number(s.rounds)||4,w,target*share);
+    const taken=slow ? null : new Set(gran.map(r=>r.week));
+    const step=s.cadence==='weekly'?1:2;
+    const liq=byInterval(step,w,target*(1-share),taken);
+    gran.forEach(r=>{r.method='gran';});
+    liq.forEach(r=>{r.method='liq';});
+    rounds.push(...gran,...splitFoliar(liq));
+    rounds.sort((x,y)=>x.week-y.week);
+  }else if(s.cadence==='weekly'||s.cadence==='biweekly'){
+    splitFoliar(byInterval(s.cadence==='weekly'?1:2,w,null).map(r=>({...r,method:'liq'}))).forEach(r=>rounds.push(r));
+  }else{
+    byRounds(Number(s.rounds)||4,w,null).forEach(r=>{r.method='gran';rounds.push(r);});
+  }
+
+
+  if(clamped!==null) flags.push({t:'warn',h:'Rate clamped.',
+    b: clamped<4
+      ? 'These settings give '+clamped.toFixed(1)+' g N/m² — too little to hold off moss, so raised to the 4 g floor. If it is that shaded, thinning the canopy beats fertiliser.'
+      : 'These settings give '+clamped.toFixed(1)+' g N/m². Capped at 15 — beyond what any garden lawn needs.'});
+
+  /* When a liquid pass shares a week with a granular round (slow-release only),
+     put the spray mid-week so the two do not stack on one calendar day — you
+     spread one day, spray another. */
+  const granWeeks=new Set(rounds.filter(r=>r.method==='gran').map(r=>r.week));
+  const extraFeeds=[];
+  rounds.forEach(r=>{
+    r.weekStart=isoWeekMonday(r.week,Number(year));
+    r.date=isoWeekSunday(r.week,Number(year));
+    if(r.split){
+      // spread the split passes across the week: Mon, Thu (, Sat) etc.
+      const offs=r.split.n===2?[0,3]:r.split.n===3?[0,2,4]:[0,2,4,6];
+      r.date=new Date(r.weekStart); r.date.setDate(r.date.getDate()+(offs[r.split.k]||0));
+    }else if(r.method==='liq'&&granWeeks.has(r.week)){
+      r.date=new Date(r.weekStart); r.date.setDate(r.date.getDate()+3);  // Thursday
+    }
+    r.iso=iso(r.date);
+    r.past=r.date<today;
+    r.phase=phaseOf(r.week);
+    r.growIn=growWeeks.has(r.week);
+  });
+
+  /* --- match what was actually applied to what was planned ---
+     Nobody spreads on the exact Monday. Allow a window either side, scaled to
+     the interval, so a feed done a few days late still counts as done. */
+  /* Weeks you are away: drop the round and push its nitrogen onto the
+     remaining active ones, within the same single-dose and autumn limits. */
+  const away=new Set(s.away||[]);
+  const today0=today;
+  let awayN=0, awayCount=0, awayLost=0;
+  rounds.forEach(r=>{ r.away=away.has(r.week); });
+  const skipped=rounds.filter(r=>r.away);
+  if(skipped.length){
+    awayCount=skipped.length;
+    awayN=skipped.reduce((a,r)=>a+r.gN,0);
+    skipped.forEach(r=>{ r.gN=0; });
+    const takers=rounds.filter(r=>!r.away&&r.date>=today0);
+    const share=takers.reduce((a,r)=>a+r.gN,0);
+    if(takers.length&&share>0){
+      takers.forEach(r=>{ r.gN+=awayN*(r.gN/share); });
+      takers.forEach(r=>{ if(r.gN>maxDose){ awayLost+=r.gN-maxDose; r.gN=maxDose; } });
+      const aut=takers.filter(r=>r.week>=autWk);
+      const autSum=aut.reduce((a,r)=>a+r.gN,0);
+      if(autSum>autCap+1e-9){
+        awayLost+=autSum-autCap;
+        const f=autCap/autSum; aut.forEach(r=>r.gN*=f);
+      }
+    }else{ awayLost=awayN; }
+    flags.push({t:'info',h:awayCount+(awayCount===1?' week':' weeks')+' marked away.',
+      b: awayLost>0.05
+        ? Math.round((awayN-awayLost)/awayN*100)+'% of the missed '+awayN.toFixed(1)+
+          ' g N/m² has been moved to the surrounding applications; the rest will not fit without oversized doses. Grass copes with a gap better than with a double dose — let it go.'
+        : awayN.toFixed(1)+' g N/m² moved onto the surrounding applications. Feed right before you leave and again when you return.'});
+  }
+
+  rounds.forEach(r=>{ r.gNbase=r.gN; });
+  const fert=entries.filter(e=>e.type==='fert'&&e.date.startsWith(year))
+    .map(e=>({...e,gN:entryGN(e,s)})).filter(e=>e.gN>0);
+  const gaps=[];
+  for(let i=1;i<rounds.length;i++) gaps.push((rounds[i].date-rounds[i-1].date)/86400000);
+  const gap=gaps.length?gaps.sort((a,b)=>a-b)[Math.floor(gaps.length/2)]:14;
+  const slack=Math.round(Math.min(14,Math.max(4,gap/2)));
+  const skipWeeks=new Set(s.skips||[]);
+  const slackMs=slack*86400000;
+
+  const claimed=new Set();
+  fert.slice().sort((a,b)=>a.date<b.date?-1:1).forEach(e=>{
+    const t=parseISO(e.date).getTime();
+    let best=null,bestD=Infinity;
+    rounds.forEach((r,i)=>{
+      if(claimed.has(i)) return;
+      const d=distToWeek(t,r.weekStart.getTime(),r.date.getTime());
+      if(d<=slackMs&&d<bestD){best=i;bestD=d;}
+    });
+    if(best!==null){
+      claimed.add(best);
+      rounds[best].done=true;
+      rounds[best].doneDate=e.date;
+      rounds[best].doneGN=(rounds[best].doneGN||0)+e.gN;
+      rounds[best].doneKg=(rounds[best].doneKg||0)+(e.kg||0);
+    }else{
+      (extraFeeds).push(e);
+    }
+  });
+
+  const tNow=today.getTime();
+  rounds.forEach(r=>{
+    if(r.away&&!r.done)                  r.status='away';
+    else if(r.done)                      r.status='done';
+    else if(tNow>r.date.getTime()+OVERDUE_DAYS*86400000) r.status='missed';
+    else if(tNow>r.date.getTime())       r.status='overdue';   // just missed — still actionable
+    else if(tNow>=r.weekStart.getTime()) r.status='due';
+    else                                 r.status='upcoming';
+    if(skipWeeks&&skipWeeks.has(r.week+':'+(r.split?r.split.k:'')) && !r.done) r.status='skipped';
+  });
+
+  // --- reconcile the plan against what was actually applied ---
+  /* A round completed today counts as planned (status 'done'), so the feed
+     that completed it must count as applied too. Using '<' made every fresh
+     log read as a shortfall equal to the dose just applied. */
+  const appliedAll=fert.reduce((a,e)=>a+e.gN,0);
+  const appliedAutumn=fert.filter(e=>isoWeekOf(parseISO(e.date))>=autWk).reduce((a,e)=>a+e.gN,0);
+  /* An empty log before the first recorded feed means "not tracked", not
+     "not fed". Reconcile from the day tracking actually began. */
+  const fertSorted=fert.slice().sort((a,b)=>a.date<b.date?-1:1);
+  const trackStart=fertSorted.length?parseISO(fertSorted[0].date):null;
+  rounds.forEach(r=>{
+    r.preTrack = trackStart ? (r.date<trackStart && !r.done) : r.past;
+    if(r.preTrack) r.status='pretrack';
+  });
+  const preCount=rounds.filter(r=>r.preTrack).length;
+  const preN=rounds.filter(r=>r.preTrack).reduce((a,r)=>a+r.gNbase,0);
+  // "should have happened by now" = done or genuinely missed, slack allowed
+  /* Planned and applied must be measured over the same set, or they drift.
+     Counting a round as owed because it is done, while excluding the feed that
+     completed it because its date has not arrived yet, invented a shortfall
+     on every entry logged ahead of time. Both sides now come from the rounds
+     themselves, plus any feed that matched no round at all. */
+  const doneR=rounds.filter(r=>r.status==='done');
+  const pastR=doneR.concat(rounds.filter(r=>r.status==='missed'||r.status==='skipped'));
+  const future=rounds.filter(r=>r.status==='due'||r.status==='upcoming');
+  const plannedToDate=pastR.reduce((a,r)=>a+r.gNbase,0);
+  const appliedToDate=doneR.reduce((a,r)=>a+(r.doneGN||0),0)
+    + extraFeeds.filter(e=>parseISO(e.date)<=today).reduce((a,e)=>a+e.gN,0);
+  let delta=plannedToDate-appliedToDate, uncorrected=0, adjusted=false;
+
+  const tracking=fert.length>0;
+  if(tracking&&future.length&&Math.abs(delta)>0.05){
+    const share=future.reduce((a,r)=>a+r.gNbase,0);
+    if(share>0){
+      adjusted=true;
+      future.forEach(r=>{ r.gN=Math.max(0,r.gNbase+delta*(r.gNbase/share)); });
+      future.forEach(r=>{ if(r.gN>maxDose){ uncorrected+=r.gN-maxDose; r.gN=maxDose; } });
+      /* Catch-up can shrink a granular round below the spreadable floor. Merge
+         any such round into the nearest remaining granular round rather than
+         leaving a handful too small to spread evenly. Liquid can go small. */
+      let merged=true;
+      while(merged){
+        merged=false;
+        const smalls=rounds.filter(r=>r.method==='gran'&&!r.done&&!r.away&&r.gN>0&&r.gN<MIN_GRAN_N);
+        if(smalls.length){
+          const victim=smalls[0];
+          const gr=rounds.filter(r=>r.method==='gran'&&r!==victim&&!r.done&&!r.away);
+          if(gr.length){
+            let near=gr[0], bd=Math.abs(gr[0].week-victim.week);
+            gr.forEach(r=>{const d=Math.abs(r.week-victim.week); if(d<bd){bd=d;near=r;}});
+            near.gN+=victim.gN; victim.gN=0; victim.merged=true; victim.status='merged';
+            merged=true;
+          }
+        }
+      }
+      const futAut=future.filter(r=>r.week>=autWk);
+      const futAutSum=futAut.reduce((a,r)=>a+r.gN,0);
+      const room=Math.max(0,autCap-appliedAutumn);
+      if(futAutSum>room+1e-9){
+        uncorrected+=futAutSum-room;
+        const f=room/futAutSum;
+        futAut.forEach(r=>r.gN*=f);
+      }
+    }
+  }
+  if(uncorrected>0.05) flags.push({t:'warn',h:'Cannot fully catch up.',
+    b:uncorrected.toFixed(1)+' g N/m² will not fit in the rest of the season without oversized doses. Let it go — a slightly hungry lawn beats one force-fed in October.'});
+  if(tracking&&!future.length&&Math.abs(delta)>0.05) flags.push({t:'info',h:'Season is over.',
+    b:'No applications left to adjust. '+(delta>0?'You finished '+delta.toFixed(1)+' g N/m² under plan.':'You finished '+(-delta).toFixed(1)+' g N/m² over plan.')});
+
+  const counts={away:rounds.filter(r=>r.status==='away').length,
+    done:rounds.filter(r=>r.status==='done').length,
+    missed:rounds.filter(r=>r.status==='missed').length,
+    due:rounds.filter(r=>r.status==='due').length,
+    upcoming:rounds.filter(r=>r.status==='upcoming').length,
+    pretrack:preCount,total:rounds.length};
+  const status={delta,applied:appliedToDate,appliedAll,planned:plannedToDate,adjusted,uncorrected,
+    trackStart:trackStart?iso(trackStart):null,preCount,preN,slack,counts,extra:extraFeeds.length,
+    autumnApplied:appliedAutumn,autumnRoom:Math.max(0,autCap-appliedAutumn),
+    tracking,
+    state:!tracking?'untracked':(Math.abs(delta)<=0.05?'ontrack':(delta>0?'behind':'ahead'))};
+
+  // --- product quantities, after every adjustment ---
+  const npk=parseNPK(s.npk,s.oxide);
+  const npkL=parseNPK(isLiq(s.form)?(s.npkLiq||s.npk):s.npk,s.oxide);
+  rounds.forEach(r=>{
+    const n = r.method==='liq' ? npkL : npk;
+    r.bag = r.method==='liq' ? (s.npkLiq||s.npk) : s.npk;
+    r.gProd = n.n>0 ? r.gN/(n.n/100) : 0;
+    r.kg = r.gProd*s.area/1000;
+  });
+
+  if(npk.n<=0) flags.push({t:'warn',h:'No N-P-K.',b:'Enter the fertiliser analysis to get product quantities.'});
+
+  /* --- spray water ---
+     Water volume is set by the uptake route, but a heavy dose forces extra
+     dilution to stay under the scorch threshold. */
+  let spray=null;
+  if(isLiq(s.form)){
+    const route=SPRAY[s.uptake]||SPRAY.leaf;
+    let overConc=0, overDose=0;
+    /* A volume you set yourself never moves. The app only sizes the volume
+       itself when you have not chosen one. */
+    const fixedMl = s.sprayVol>0 && s.area>0 ? s.sprayVol*1000/s.area : 0;
+    const liqRounds=rounds.filter(r=>r.method==='liq');
+    liqRounds.forEach(r=>{
+      let ml;
+      if(fixedMl>0){ ml=fixedMl; }
+      else {
+        const needed = r.gN>0 ? r.gN*1000/MAX_N_CONC : 0;   // mL/m² to stay safe
+        ml=route.def;
+        if(needed>ml) ml=Math.min(route.max,needed);
+      }
+      r.sprayMl=ml;
+      r.litres=ml*s.area/1000;
+      r.concN=ml>0?r.gN*1000/ml:0;
+      r.gProdTotal=r.gProd*s.area;
+      r.tanks=s.tank>0?r.litres/s.tank:0;
+      if(r.concN>MAX_N_CONC+0.1) overConc++;
+      if(s.uptake==='leaf'&&r.gN>FOLIAR_MAX_N*1.25) overDose++;   // clearly over, not just at the edge
+    });
+    const mls=[...new Set(liqRounds.map(r=>Math.round(r.sprayMl)))];
+    const ref=liqRounds.find(r=>!r.past)||liqRounds[liqRounds.length-1]||null;
+    spray={route,ref,fixed:fixedMl>0,constant:mls.length===1,mlMin:Math.min(...mls),mlMax:Math.max(...mls),
+           litresMin:Math.min(...mls)*s.area/1000,litresMax:Math.max(...mls)*s.area/1000,
+           overConc,overDose};
+
+    /* Foliar has a hard ceiling per pass, so the two failures almost always
+       arrive together. Say it once, and say what to do about it. */
+    if(fixedMl>0&&overConc){
+      const worst=liqRounds.reduce((a,r)=>r.concN>a.concN?r:a);
+      const needL=worst.gN*s.area/MAX_N_CONC;
+      flags.push({t:'warn',h:'Not enough water.',
+        b:'At '+s.sprayVol+' L the strongest mix reaches '+worst.concN.toFixed(1)+
+          ' g N/L, past the '+MAX_N_CONC+' ceiling. Go to at least '+needL.toFixed(1)+
+          ' L to stay under it, or around '+(worst.gN*s.area/CONC_GOOD).toFixed(1)+
+          ' L to land in the comfortable range.'});
+    }
+    /* The foliar dose ceiling is about what the leaf can take up, so it is
+       independent of how much water the dose sits in — check it whether or
+       not the volume is fixed. */
+    if(s.uptake==='leaf'&&overDose){
+      const worst=liqRounds.reduce((a,r)=>r.gN>a.gN?r:a);
+      const fix = s.form==='combi'
+        ? 'Shift more of the season onto the granular side, or water these in as a soil feed.'
+        : s.cadence!=='weekly'
+        ? 'Shorten the interval to weekly, or switch to the soil route and water it in.'
+        : 'Switch to the soil route and water it in, or run part of the programme granular.';
+      flags.push({t:'warn',h:'Too much N for the leaf to take up.',
+        b:overDose+' liquid '+(overDose>1?'passes exceed ':'pass exceeds ')+FOLIAR_MAX_N+
+          ' g N/m² (largest '+worst.gN.toFixed(2)+'). A leaf absorbs about '+FOLIAR_MAX_N+
+          ' g N/m² per pass; the rest sits on top and risks scorch no matter how much water it is in. '+fix});
+    }
+    if(!fixedMl&&s.uptake==='leaf'&&overConc&&!overDose){
+      const worst=liqRounds.reduce((a,r)=>r.concN>a.concN?r:a);
+      flags.push({t:'warn',h:'Tank mix runs strong.',
+        b:'Up to '+worst.concN.toFixed(0)+' g N/L at the sensible water maximum. More water, or shorten the interval.'});
+    }
+    const splitWeeks=new Set(rounds.filter(r=>r.split).map(r=>r.week));
+    if(splitWeeks.size)
+      flags.push({t:'info',h:'Big passes split in two.',
+        b:splitWeeks.size+' week'+(splitWeeks.size>1?'s':'')+' would have gone over '+FOLIAR_SPLIT+
+          ' g N/m² in one spray, more than the leaf takes up at once — each is split into two lighter passes a few days apart. Same nitrogen, gentler on the grass.'});
+    const edge=liqRounds.filter(r=>r.gN>FOLIAR_MAX_N&&r.gN<=FOLIAR_MAX_N*1.25).length;
+    if(s.uptake==='leaf'&&edge&&!overDose)
+      flags.push({t:'info',h:'Peak doses sit at the foliar edge.',
+        b:'A few midsummer passes nudge just past '+FOLIAR_MAX_N+' g N/m². Fine in cool, humid weather; water them in on a warm day.'});
+    if(s.uptake==='soil'&&overConc) flags.push({t:'warn',h:'Tank mix too strong.',
+      b:'Even at the maximum water volume, '+overConc+' application'+(overConc>1?'s exceed ':' exceeds ')+
+        MAX_N_CONC+' g N per litre. Split the dose across two passes, or water in immediately and heavily.'});
+  }
+
+  const big=rounds.filter(r=>!r.past&&r.method!=='liq'&&r.gN>maxDose+0.05);
+  if(big.length) flags.push({t:'warn',h:'Doses are large.',
+    b:big.length+' granular round'+(big.length>1?'s exceed ':' exceeds ')+'the '+maxDose+
+      ' g N/m² single-dose limit (largest '+Math.max(...big.map(r=>r.gN)).toFixed(1)+'). '+
+      (slow?'Even for slow-release that is a lot at once — add a round.'
+           :'Add a round, or switch to slow-release granular if that is what you are using.')});
+
+  const granRounds=rounds.filter(r=>r.method==='gran');
+  if(npk.n>0&&granRounds.length){
+    const small=granRounds.filter(r=>r.gProd<MIN_SPREAD);
+    if(small.length>granRounds.length/2){
+      const med=granRounds.map(r=>r.gProd).sort((a,b)=>a-b)[Math.floor(granRounds.length/2)];
+      flags.push({t:'warn',h:'Too fine to spread.',
+        b:'A typical dose is '+med.toFixed(1)+' g/m² — '+mass(med*s.area/1000)+
+          ' over the lawn. Below about '+MIN_SPREAD+' g/m² a spreader leaves stripes. Switch to liquid, or use fewer, larger rounds.'});
+    }
+  }
+
+  /* Grade the P and K the programme actually delivers, not one chosen bag.
+     Either bag can carry P and K, so sum the real grams across all rounds and
+     express them as an index against the nitrogen — that is what the grass sees. */
+  let totN=0,totP=0,totK=0;
+  rounds.forEach(r=>{
+    const bag = r.method==='liq' ? npkL : npk;
+    if(bag.n<=0) return;
+    const prodG = r.gN/(bag.n/100);        // g product/m² for this round
+    totN+=r.gN; totP+=prodG*(bag.p/100); totK+=prodG*(bag.k/100);
+  });
+  const pIdx=totN>0?totP/totN*100:0, kIdx=totN>0?totK/totN*100:0;
+
+  /* Combination balance: with the two chosen bags, which granular share lands
+     P and K closest to target — and where a nutrient simply cannot reach it,
+     name that so the fix is a shopping decision rather than a slider nudge. */
+  let combiBal=null;
+  if(s.form==='combi'&&npk.n>0&&npkL.n>0){
+    const TP=14, TK=65;
+    const idxAt=sh=>{
+      // sh = fraction of N from granular; index = product-weighted P,K per 100 N
+      const gP=npk.p/npk.n, gK=npk.k/npk.n, lP=npkL.p/npkL.n, lK=npkL.k/npkL.n;
+      return {p:(sh*gP+(1-sh)*lP)*100, k:(sh*gK+(1-sh)*lK)*100};
+    };
+    // the K index is monotonic in share, so scan for the closest achievable
+    let best=null;
+    for(let sh=0.1;sh<=0.9001;sh+=0.05){
+      const ix=idxAt(sh);
+      const miss=Math.abs(ix.k-TK)/TK+Math.abs(ix.p-TP)/TP;
+      if(!best||miss<best.miss) best={sh,ix,miss};
+    }
+    const cur=Math.min(0.9,Math.max(0.1,(Number(s.granShare)||50)/100));
+    const curIx=idxAt(cur);
+    // reachable range of K across all shares
+    const kLo=Math.min(idxAt(0.1).k,idxAt(0.9).k), kHi=Math.max(idxAt(0.1).k,idxAt(0.9).k);
+    const pLo=Math.min(idxAt(0.1).p,idxAt(0.9).p), pHi=Math.max(idxAt(0.1).p,idxAt(0.9).p);
+    combiBal={best:Math.round(best.sh*100),bestK:best.ix.k,bestP:best.ix.p,
+      cur:Math.round(cur*100),curK:curIx.k,curP:curIx.p,
+      // reachable if target sits within the span OR the best you can do meets/exceeds it
+      kReach:kHi>=TK-1, pReach:pHi>=TP-1,
+      kMax:kHi,pMax:pHi};
+  }
+
+  return {annual,target,boosted,weekly:w,rounds,autumn:aut,region:R,npk,pIdx,kIdx,combiBal,flags,spray,counts,slack,isCurrentYear,autWk,slow,maxDose,autCap,
+          year:Number(year),start,end,startSrc,endSrc,status,growIn:growWeeks.size>0,
+          next:future[0]||null,
+          totalKg:rounds.reduce((a,r)=>a+r.kg,0),
+          peakWeek:Math.max(...w)};
+}
+
+/* Iron runs on its own schedule rather than sharing the fertiliser rounds:
+   the purposes want different times of year, and matching logged iron to
+   logged feeds would corrupt both. */
+function ironPlan(s,entries,ctx){
+  if(!s.ironOn) return null;
+  const P=IRON[s.ironPurpose]||IRON.colour;
+  const {start,end,year,today,slack,away}=ctx;
+  const annual=(P.lo+P.hi)/2;
+  const fePct=Math.max(0.5,Number(s.ironFe)||IRON_FE);
+  const flags=[];
+
+  let weeks=[], perApp=null;
+  if(P.us){
+    const step=Math.max(2,Math.min(4,Number(s.ironInterval)||3));
+    perApp=P.perApp;
+    for(let w=start;w<=end;w+=step) weeks.push(w);
+  }else if(s.ironPurpose==='moss'){
+    // moss is treated when it is growing and the grass is not stressed
+    weeks=[start+2, Math.max((ctx.autWk||36)+3,start+10)];
+  }else{
+    const from = s.ironPurpose==='colour' ? Math.max(start,22) : start;
+    const span=Math.max(1,end-from);
+    for(let k=0;k<P.apps;k++) weeks.push(Math.round(from+span*(k+0.5)/P.apps));
+  }
+  weeks=[...new Set(weeks.map(w=>Math.min(end,Math.max(start,w))))].sort((a,b)=>a-b);
+
+  const rounds=weeks.map(w=>({week:w,gFeSO4:perApp!==null?perApp:annual/weeks.length,away:away.has(w)}));
+  const skipped=rounds.filter(r=>r.away);
+  /* A rate-per-application programme just misses a pass; there is nothing to
+     carry forward, unlike an annual allowance. */
+  if(skipped.length&&perApp===null){
+    const moved=skipped.reduce((a,r)=>a+r.gFeSO4,0);
+    skipped.forEach(r=>{r.gFeSO4=0;});
+    const takers=rounds.filter(r=>!r.away);
+    if(takers.length) takers.forEach(r=>{r.gFeSO4+=moved/takers.length;});
+  }else if(skipped.length){ skipped.forEach(r=>{r.gFeSO4=0;}); }
+
+  const iron=entries.filter(e=>e.type==='iron'&&e.date.startsWith(year))
+    .map(e=>({...e,gFeSO4:entryFeSO4(e,s)})).filter(e=>e.gFeSO4>0);
+  const claimed=new Set();
+  iron.slice().sort((a,b)=>a.date<b.date?-1:1).forEach(e=>{
+    const t=parseISO(e.date).getTime();
+    let best=null,bd=Infinity;
+    rounds.forEach((r,i)=>{
+      if(claimed.has(i)||r.away) return;
+      const d=distToWeek(t,isoWeekMonday(r.week,Number(year)).getTime(),
+                            isoWeekSunday(r.week,Number(year)).getTime());
+      if(d<=slack*86400000*1.5&&d<bd){best=i;bd=d;}
+    });
+    if(best!==null){ claimed.add(best); rounds[best].done=true; rounds[best].doneDate=e.date; }
+  });
+
+  const tNow=today.getTime();
+  rounds.forEach(r=>{
+    r.kind='iron';
+    r.weekStart=isoWeekMonday(r.week,Number(year));
+    r.date=isoWeekSunday(r.week,Number(year));
+    r.iso=iso(r.date);
+    r.gFe=r.gFeSO4*(IRON_FE/100);
+    r.gProd=r.gFe/(fePct/100);              // grams of the user's product per m2
+    r.total=r.gProd*s.area;
+    r.litres=P.ml*s.area/1000;
+    r.conc=r.litres>0?r.total/r.litres:0;
+    r.purpose=P.label;
+    if(r.away&&!r.done)                  r.status='away';
+    else if(r.done)                      r.status='done';
+    else if(tNow>r.date.getTime())       r.status='missed';
+    else if(tNow>=r.weekStart.getTime()) r.status='due';
+    else                                 r.status='upcoming';
+  });
+
+  const appliedFeSO4=iron.reduce((a,e)=>a+e.gFeSO4,0);
+  const plannedFeSO4=rounds.reduce((a,r)=>a+r.gFeSO4,0);
+
+  if(P.us){
+    const yearTot=rounds.reduce((a,r)=>a+r.gFeSO4,0);
+    flags.push({t:'info',h:'This is the American colour programme.',
+      b:rounds.length+' applications of '+P.perApp+' g FeSO₄/m² at '+
+        (Number(s.ironInterval)||3)+'-week intervals — '+yearTot.toFixed(1)+
+        ' g FeSO₄/m² across the year. Each dose is in the range research links to visible green-up; the Nordic rate is not.'});
+    flags.push({t:'warn',h:'It will acidify the surface.',
+      b:'That much iron sulphate a year pulls surface pH down. Phosphorus is most available at pH 6.0–6.5 and Norwegian garden soil often sits below that already, so test it and lime if needed. This is the real cost of the programme, not the staining.'});
+    flags.push({t:'warn',h:'And it will kill your moss.',
+      b:yearTot.toFixed(1)+' g FeSO₄/m² a year is '+(yearTot/3.35).toFixed(1)+
+        '× the annual quantity used for moss control. Moss will blacken. Treat that as a plant-protection effect and use a product cleared for lawn use, not timber-staining jernvitriol.'});
+    flags.push({t:'warn',h:'Stains, permanently.',
+      b:'At this frequency you will be spraying near paving twenty-odd times a season. Ferrous sulphate marks concrete, pavers and decking, and the marks do not wash off. Keep it off hard surfaces and rinse the spreader or sprayer away from them.'});
+  }
+  if(s.ironPurpose==='moss'){
+    flags.push({t:'warn',h:'This is a pesticide rate, not a feed.',
+      b:'Moss control needs '+P.lo+'–'+P.hi+' g FeSO₄/m² a year — far past the '+IRON_LEGAL+
+        ' g/m² above which a product stops counting as fertiliser. Use something approved for lawn moss. The jernvitriol sold for staining timber is not.'});
+    if(fePct<15) flags.push({t:'warn',h:'Chelated iron will not kill moss.',
+      b:'At '+fePct+'% Fe this looks like a chelate. Moss is killed by the acidity and free iron in iron(II) sulphate; chelates green the grass but leave the moss alive.'});
+  }
+  if(appliedFeSO4+plannedFeSO4>IRON_LEGAL&&s.ironPurpose!=='moss'&&!P.us)
+    flags.push({t:'warn',h:'Past the fertiliser threshold.',
+      b:'This adds up to '+(appliedFeSO4+plannedFeSO4).toFixed(2)+' g FeSO₄/m² for the year, over the '+
+        IRON_LEGAL+' g/m² line. That is a moss-control quantity, not a feeding one.'});
+  if(s.ironPurpose==='colour')
+    flags.push({t:'info',h:'Subtle by design.',
+      b:'The Nordic rate keeps the year under the fertiliser threshold, but each dose is well below what research links to a visible green-up. Choose the US programme if you want colour you can actually see.'});
+  if(rounds.some(r=>r.conc>IRON_MAX_CONC))
+    flags.push({t:'warn',h:'Strong mix.',
+      b:'Over '+IRON_MAX_CONC+' g of product per litre. Use more water — strong iron solutions scorch grass and stain badly. That limit is a rule of thumb, not a published figure.'});
+  if(s.ironPurpose==='moss'&&(s.shade==='deep'||s.shade==='part'))
+    flags.push({t:'info',h:'Iron treats the symptom.',
+      b:'Your lawn is marked '+(s.shade==='deep'?'deep shade':'part shade')+'. Moss wins there because grass cannot compete for light, so it will return every year until the canopy above is thinned. The iron buys you a season.'});
+
+  return {purpose:s.ironPurpose,label:P.label,annual,fePct,rounds,flags,us:!!P.us,
+          plannedFeSO4,appliedFeSO4,band:[P.lo,P.hi],ml:P.ml,
+          next:rounds.find(r=>r.status==='due')||rounds.find(r=>r.status==='upcoming')||null};
+}
+
+function refreshPlan(){
+  plan=computePlan(state.settings,state.entries);
+  plan.iron=ironPlan(state.settings,state.entries,{start:plan.start,end:plan.end,autWk:plan.autWk,
+    year:String(plan.year),today:new Date(new Date().setHours(0,0,0,0)),
+    slack:plan.slack,away:new Set(state.settings.away||[])});
+  planByDate=new Map(plan.rounds.map(r=>[r.iso,r]));
+}
+
+/* ============================================================
+   Render — Log
+   ============================================================ */
+function renderCal(){
+  document.getElementById('moName').textContent=MONTHS[view.getMonth()];
+  document.getElementById('moYear').textContent=view.getFullYear();
+  const first=new Date(view.getFullYear(),view.getMonth(),1);
+  const start=new Date(first); start.setDate(1-((first.getDay()+6)%7));
+  const today=iso(new Date());
+  const box=document.getElementById('days'); box.innerHTML='';
+  for(let i=0;i<42;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const k=iso(d);
+    const ent=state.entries.filter(e=>e.date===k);
+    const isPlan=planByDate.has(k);
+    const b=document.createElement('button');
+    b.className='day'+(d.getMonth()!==view.getMonth()?' out':'')+(k===today?' today':'')
+      +(k===selected?' sel':'')+(isPlan?' plan':'');
+    const cols=[...new Set(ent.map(e=>T(e.type).color))].slice(0,3);
+    b.innerHTML='<span>'+d.getDate()+'</span><span class="dots">'+
+      cols.map(c=>'<i style="background:'+c+'"></i>').join('')+'</span>';
+    b.setAttribute('aria-label',d.toDateString()
+      +(ent.length?', '+ent.length+' logged':'')+(isPlan?', fertiliser due':''));
+    b.onclick=()=>{
+      selected=k;
+      if(d.getMonth()!==view.getMonth()) view=new Date(d.getFullYear(),d.getMonth(),1);
+      renderCal(); renderDay();
+    };
+    box.appendChild(b);
+  }
+}
+
+function renderDay(){
+  const d=parseISO(selected);
+  document.getElementById('dayLabel').textContent=
+    d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+
+  const pr=planByDate.get(selected), pbox=document.getElementById('dayPlan');
+  const done=state.entries.some(e=>e.date===selected&&e.type==='fert');
+  if(pr&&plan.npk.n>0&&!done){
+    pbox.innerHTML='<div class="flag info" style="margin:0 0 10px"><b>Plan: '+mass(pr.kg)+'</b> of '+
+      esc(state.settings.npk)+' — '+pr.gN.toFixed(2)+' g N/m², '+pr.phase+
+      '. <button class="btn sm ghost" id="planLog" style="margin-top:7px;display:block">Log this</button></div>';
+    document.getElementById('planLog').onclick=()=>openSheet('fert',pr.kg);
+  } else pbox.innerHTML='';
+
+  const list=state.entries.filter(e=>e.date===selected);
+  const box=document.getElementById('dayEntries');
+  if(!list.length){
+    box.innerHTML='<div class="empty">Nothing logged. Add the mow, the feed, the moss raking — the plan gets better the more it knows.</div>';
+    return;
+  }
+  box.innerHTML=list.map(e=>{
+    const t=T(e.type), meta=[];
+    if(e.type==='fert'&&e.kg){const g=entryGN(e,state.settings);
+      meta.push(mass(e.kg)+(e.npk?' · '+e.npk:'')+(g?' · '+g.toFixed(2)+' g N/m²':''));}
+    if(e.type==='mow'&&e.ht) meta.push(e.ht+' mm');
+    if(e.type==='soil'&&typeof e.temp==='number') meta.push(e.temp+' °C at 5 cm');
+    if(e.type==='iron'&&e.g) meta.push(e.g+' g at '+e.fePct+'% Fe · '+
+      entryFeSO4(e,state.settings).toFixed(2)+' g FeSO₄/m²');
+    return '<div class="entry"><div class="bar" style="background:'+t.color+'"></div>'+
+      '<div class="body"><div class="t">'+t.label+'</div>'+
+      (meta.length?'<div class="m">'+meta.join(' · ')+'</div>':'')+
+      (e.note?'<div class="n">'+esc(e.note)+'</div>':'')+
+      '</div><button class="x" data-ed="'+e.id+'" aria-label="Edit entry">✎</button>'+
+      '<button class="x" data-del="'+e.id+'" aria-label="Delete entry">×</button></div>';
+  }).join('');
+  box.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{
+    const e=state.entries.find(x=>x.id===b.dataset.ed);
+    if(e) openSheet(e.type,null,e);
+  });
+  box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    state.entries=state.entries.filter(e=>e.id!==b.dataset.del);
+    save(); refreshPlan(); renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
+  });
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* ============================================================
+   Render — Plan
+   ============================================================ */
+function shortD(isoStr){return parseISO(isoStr).toLocaleDateString(undefined,{day:'numeric',month:'long'});}
+
+/* Say plainly which dates are measured and which are still guesses. */
+function seasonSourceHTML(p){
+  const a = p.startSrc
+    ? '<b>Starts week '+p.start+'</b> — from your soil reading of '+p.startSrc.temp+' °C on '+shortD(p.startSrc.date)+'.'
+    : '<b>Starts week '+p.start+'</b> — regional default. Log a soil temperature in spring to pin this to your ground.';
+  const b = p.endSrc
+    ? '<b>Ends week '+p.end+'</b> — two weeks after your last mow on '+shortD(p.endSrc.date)+'.'
+    : '<b>Ends week '+p.end+'</b> — regional default. Once mowing stops, the last feed moves to two weeks after it.';
+  return '<div class="srcline">'+a+'<br>'+b+'</div>';
+}
+
+function reconHTML(p,compact){
+  const st=p.status;
+  if(!st.tracking) return '<div class="recon ahead">No feeds logged this season, so the plan is running as written. Log one and the remaining applications start adjusting to keep the year on target.</div>';
+  const pre = st.preCount
+    ? (compact?'':'<div class="sub">Counting from your first logged feed on '+shortD(st.trackStart)+'. The '+st.preCount+
+      ' application'+(st.preCount>1?'s':'')+' scheduled before that ('+st.preN.toFixed(1)+
+      ' g N/m²) are not treated as missed. If you genuinely fed nothing this spring that shortfall is real — but chasing it now would push autumn nitrogen past the point where it costs more in winter damage than it buys in growth.</div>')
+    : '';
+  const d=Math.abs(st.delta);
+  if(st.state==='ontrack')
+    return '<div class="recon ok">On track. <span class="n">'+st.applied.toFixed(1)+'</span> g N/m² applied against <span class="n">'+st.planned.toFixed(1)+'</span> planned since tracking began.'+
+      '<div class="sub">Steady colour and steady clipping volume are the real confirmation.</div>'+pre+'</div>';
+  const cls=st.state==='behind'?'behind':'ahead';
+  const head=st.state==='behind'
+    ? 'Behind by <span class="n">'+d.toFixed(1)+'</span> g N/m².'
+    : 'Ahead by <span class="n">'+d.toFixed(1)+'</span> g N/m².';
+  const body=st.state==='behind'
+    ? 'Applied '+st.applied.toFixed(1)+' against '+st.planned.toFixed(1)+' planned since tracking began.'+
+      (st.adjusted?' The remaining applications have been raised to close the gap.':'')
+    : 'Applied '+st.applied.toFixed(1)+' against '+st.planned.toFixed(1)+' planned since tracking began.'+
+      (st.adjusted?' The remaining applications have been cut back so the season still lands on target.':'');
+  return '<div class="recon '+cls+'">'+head+'<div class="sub">'+body+'</div>'+pre+'</div>';
+}
+
+/* Where you are in the season, at a glance. */
+function positionHTML(p){
+  const now=new Date(), nowW=isoWeekOf(now), c=p.counts;
+  const span=Math.max(1,p.end-p.start);
+  const clamp=v=>Math.max(0,Math.min(100,v));
+  const nowPct=clamp((nowW-p.start)/span*100);
+  const before=nowW<p.start, after=nowW>p.end;
+
+  const dots=p.rounds.map(r=>
+    '<i class="s-'+r.status+'" style="left:'+clamp((r.week-p.start)/span*100)+'%"></i>').join('');
+
+  let head,sub;
+  if(before){ head='Before the season'; sub='Feeding starts week '+p.start+'.'; }
+  else if(after){ head='Season closed'; sub='Feeding ran to week '+p.end+'.'; }
+  else{ head='Week '+nowW; sub=phaseOf(nowW); }
+
+  return '<div class="card">'+
+    '<p class="eyebrow">Where you are</p>'+
+    '<div class="pos"><span class="wk">'+head+'</span><span class="ph">'+sub+'</span>'+
+      '<span class="off">wk '+p.start+'–'+p.end+'</span></div>'+
+    '<div class="timeline">'+
+      '<div class="track"></div><div class="fill" style="width:'+nowPct+'%"></div>'+
+      (before||after?'':'<div class="now" style="left:'+nowPct+'%"></div>'+
+        '<div class="lab" style="left:'+nowPct+'%">now</div>')+
+      dots+
+    '</div>'+
+    '<div class="tally">'+
+      (c.done?'<span class="d">'+c.done+' done</span>':'')+
+      (c.missed?'<span class="m">'+c.missed+' missed</span>':'')+
+      (c.due?'<span class="d">'+c.due+' due</span>':'')+
+      (c.away?'<span class="a">'+c.away+' away</span>':'')+
+      '<span class="u">'+c.upcoming+' to come</span>'+
+      (c.pretrack?'<span class="u">'+c.pretrack+' before tracking</span>':'')+
+    '</div>'+
+  '</div>';
+}
+
+/* Where a tank strength sits: comfortable, workable, at the edge, or past it. */
+function concBand(c){
+  if(c<=CONC_GOOD) return {k:'good',c:'var(--chloro)',t:'comfortable'};
+  if(c<=CONC_OK)   return {k:'ok',  c:'var(--ink)',   t:'workable — fine in cool, humid air'};
+  if(c<=MAX_N_CONC)return {k:'edge',c:'var(--soil)',  t:'at the edge — not on a warm day'};
+  return {k:'over',c:'var(--danger)',t:'too strong'};
+}
+function bandScale(c){
+  const pct=v=>Math.min(100,v/20*100);
+  return '<div class="band">'+
+    '<i class="g" style="left:0;width:'+pct(CONC_GOOD)+'%"></i>'+
+    '<i class="o" style="left:'+pct(CONC_GOOD)+'%;width:'+(pct(CONC_OK)-pct(CONC_GOOD))+'%"></i>'+
+    '<i class="e" style="left:'+pct(CONC_OK)+'%;width:'+(pct(MAX_N_CONC)-pct(CONC_OK))+'%"></i>'+
+    '<i class="x" style="left:'+pct(MAX_N_CONC)+'%;width:'+(100-pct(MAX_N_CONC))+'%"></i>'+
+    '<b style="left:'+pct(c)+'%"></b></div>'+
+    '<div class="bandlab"><span>0</span><span>'+CONC_GOOD+'</span><span>'+CONC_OK+
+    '</span><span>'+MAX_N_CONC+'</span></div>';
+}
+
+function combiBalHTML(p){
+  const c=p.combiBal;
+  if(!c) return '';
+  let out='';
+  // suggest a better split when one is meaningfully closer
+  if(Math.abs(c.best-c.cur)>=5 && (c.kReach||c.pReach)){
+    out+='<div class="shareTip"><span>Best balance with these two bags is at '+
+      c.best+'% granular (P '+c.bestP.toFixed(0)+', K '+c.bestK.toFixed(0)+
+      '). You are at '+c.cur+'%.</span>'+
+      '<button onclick="applyShare('+c.best+')">Use '+c.best+'%</button></div>';
+  }
+  // name any nutrient that cannot reach target with these bags
+  const gaps=[];
+  if(!c.kReach) gaps.push('potassium (best these bags reach is K '+c.kMax.toFixed(0)+', target 65)');
+  if(!c.pReach) gaps.push('phosphorus');
+  if(gaps.length)
+    out+='<div class="flag"><b>These two bags cannot hit target.</b> No split reaches '+
+      gaps.join(' or ')+'. A '+(!c.kReach?'potassium-carrying liquid (e.g. a soluble K feed) on the spray side':'lower-P bag')+
+      ', or a separate feed, would close the gap.</div>';
+  return out;
+}
+
+function sprayHTML(p,s){
+  const sp=p.spray;
+  if(!sp||p.npk.n<=0) return '';
+  const r=p.rounds.find(x=>x.status==='due')||p.rounds.find(x=>x.status==='upcoming')||sp.ref;
+  if(!r||!r.litres) return '';
+  const leaf=s.uptake==='leaf';
+  const tanks=s.tank>0?r.litres/s.tank:0;
+  const when = r.status==='due' ? 'Due this week'
+             : 'Week of '+r.weekStart.toLocaleDateString(undefined,{day:'numeric',month:'long'});
+  /* Concentration is what stays constant, so each tank gets product in
+     proportion to the water it holds — not the total split evenly. */
+  const gPerL=r.litres>0?r.gProdTotal/r.litres:0;
+  const full=Math.floor(r.litres/s.tank+1e-9);
+  const restL=r.litres-full*s.tank;
+  let fills;
+  if(r.litres<=s.tank+1e-9){
+    fills='One tankful — '+Math.round(r.gProdTotal)+' g of product into '+vol(r.litres)+' of water.';
+  }else{
+    const parts=[full+' full tank'+(full>1?'s':'')+' ('+s.tank+' L with '+Math.round(gPerL*s.tank)+' g'+(full>1?' each':'')+')'];
+    if(restL>0.05) parts.push('then a part tank of '+vol(restL)+' with '+Math.round(gPerL*restL)+' g');
+    fills=parts.join(', ')+'. Mix at '+gPerL.toFixed(1)+' g per litre throughout.';
+  }
+  const how = leaf
+    ? 'Mix, spray onto dry leaves, leave it to work. Water in a few hours later.'
+    : 'Mix, spray, then water in 3–4 mm straight away.';
+  const bd=concBand(r.concN);
+  return '<div class="card">'+
+    '<p class="eyebrow">Next spray — '+sp.route.label.toLowerCase()+'</p>'+
+    '<div class="pos" style="margin-bottom:2px"><span class="wk" style="font-size:19px">'+when+'</span>'+
+      '<span class="off">wk '+r.week+'</span></div>'+
+    '<div class="mixgrid" style="grid-template-columns:repeat(2,1fr);margin-top:10px">'+
+      '<div><span class="k">Fertiliser</span><b>'+mass(r.gProdTotal/1000)+'</b><span class="u">'+esc(r.bag||s.npk)+'</span></div>'+
+      '<div><span class="k">Water, this pass</span><b>'+vol(r.litres)+'</b><span class="u">over '+s.area+' m²</span></div>'+
+      '<div><span class="k">Water rate</span><b>'+Math.round(r.sprayMl)+'</b><span class="u">mL/m²</span></div>'+
+      '<div><span class="k">Strength</span><b style="color:'+bd.c+'">'+r.concN.toFixed(1)+'</b>'+
+        '<span class="u">g N/L · '+bd.t+'</span></div>'+
+    '</div>'+
+    bandScale(r.concN)+
+    '<p style="font-size:13px;margin:11px 0 0">'+fills+'</p>'+
+    '<p class="hint" style="margin-top:5px">'+how+'</p>'+
+  '</div>';
+}
+
+/* Plenrens calculator. Everything below traces to the two Norwegian labels;
+   nothing here is extrapolated. */
+function plenrensHTML(p,s,entries){
+  const gran = s.plenProd==='gran';
+  const P = gran?PLENRENS.gran:PLENRENS.kons;
+  const A = s.plenArea>0?s.plenArea:s.area;
+  const partial = s.plenArea>0 && s.plenArea<s.area;
+  const yr=String(new Date().getFullYear());
+
+  // --- timing checks against the log ---
+  const warn=[];
+  const mows=entries.filter(e=>e.type==='mow'&&e.date.startsWith(yr)).map(e=>e.date).sort();
+  if(mows.length){
+    const d=Math.floor((Date.now()-parseISO(mows[mows.length-1]).getTime())/86400000);
+    if(d<5) warn.push('You mowed '+(d===0?'today':d+' day'+(d===1?'':'s')+' ago')+
+      '. The label wants 3–5 days either side of cutting — the weed needs leaf area to absorb through. Wait '+(5-d)+' more day'+((5-d)===1?'':'s')+'.');
+  }
+  const seeds=entries.filter(e=>e.type==='seed').map(e=>e.date).sort();
+  if(seeds.length){
+    const m=Math.floor((Date.now()-parseISO(seeds[seeds.length-1]).getTime())/86400000/30.4);
+    if(m<6) warn.push('You overseeded about '+m+' month'+(m===1?'':'s')+' ago. New grass must not be treated for '+
+      P.newLawnMonths+' months.');
+  }
+
+  let tiles,detail,budget='';
+  if(!gran){
+    const ml=P.mlPerM2*A, litres=P.waterMlPerM2*A/1000, bottles=ml/P.bottleMl;
+    const full=Math.floor(litres/s.tank+1e-9), restL=litres-full*s.tank;
+    const perFull=P.mixMlPerL*s.tank;
+    detail = litres<=s.tank+1e-9
+      ? 'One tankful — '+Math.round(ml)+' ml of concentrate into '+vol(litres)+' of water.'
+      : full+' full tank'+(full>1?'s':'')+' ('+s.tank+' L with '+Math.round(perFull)+' ml'+(full>1?' each':'')+')'+
+        (restL>0.05?', then '+vol(restL)+' with '+Math.round(P.mixMlPerL*restL)+' ml':'')+'.';
+    tiles=[['Concentrate',Math.round(ml)+' ml',bottles<=1?'part of a 500 ml bottle':bottles.toFixed(1)+' × 500 ml bottles'],
+           ['Water',vol(litres),'over '+Math.round(A)+' m²'],
+           ['Mix ratio',P.mixMlPerL+' ml/L','label strength'],
+           ['Water rate',P.waterMlPerM2+' mL/m²','fixed by the label']];
+  }else{
+    const kg=P.gPerM2*A/1000, nTot=P.nPerM2*A, feTot=P.fePerM2*A;
+    const share=p.target>0?P.nPerM2/p.target*100:0;
+    detail='Spread '+mass(kg)+' evenly over '+Math.round(A)+' m² with a spreader — '+P.gPerM2+' g/m². It cannot go in a sprayer.';
+    tiles=[['Product',mass(kg),P.gPerM2+' g/m²'],
+           ['Nitrogen',P.nPerM2.toFixed(1)+' g/m²',Math.round(nTot)+' g N total'],
+           ['Iron sulphate',P.fePerM2.toFixed(1)+' g/m²',Math.round(feTot)+' g total'],
+           ['Of annual N',Math.round(share)+'%','of your '+p.target.toFixed(1)+' g N/m² plan']];
+
+    // what it does to the fertiliser plan
+    const upcoming=p.rounds.filter(r=>r.status==='due'||r.status==='upcoming');
+    let acc=0,n=0;
+    for(const r of upcoming){ if(acc+r.gN>P.nPerM2+0.001) break; acc+=r.gN; n++; }
+    budget='<div class="flag"><b>This is a big feed, not just a weedkiller.</b> At '+P.nPerM2+
+      ' g N/m² it is past the '+maxDose+' g single-dose limit and covers roughly '+Math.round(share)+
+      '% of the season. Log it as a fertilising entry of '+mass(P.gPerM2*A/1000)+' at N-P-K <b>'+P.npk+
+      '</b> and the plan will absorb it'+(n?' — that is about the next '+n+' application'+(n===1?'':'s')+' accounted for.':'.')+'</div>';
+    budget+='<div class="flag info"><b>It is also an iron application.</b> '+P.fePerM2.toFixed(1)+
+      ' g FeSO₄/m² — log it as an Iron entry too ('+Math.round(P.gPerM2*A)+' g of product at 3.6% Fe) so the season total stays right.</div>';
+    if(partial) budget+='<div class="flag info">You are treating '+Math.round(A)+' m² of '+s.area+
+      ' m². The nitrogen lands only on that patch, so it will green up faster than the rest. The plan works in g/m² across the whole lawn and cannot model a patch — treat the figures above as applying to the treated area only.</div>';
+  }
+
+  return '<div class="card">'+
+    '<p class="eyebrow">Plenrens — '+(gran?'granulat':'konsentrat')+'</p>'+
+    '<div class="mixgrid" style="grid-template-columns:repeat(2,1fr)">'+
+      tiles.map(t=>'<div><span class="k">'+t[0]+'</span><b>'+t[1]+'</b><span class="u">'+t[2]+'</span></div>').join('')+
+    '</div>'+
+    '<p style="font-size:13px;margin:11px 0 0">'+detail+'</p>'+
+    warn.map(w=>'<div class="flag">'+w+'</div>').join('')+
+    '<details class="disc"><summary>Dose notes and cautions</summary><div class="body">'+
+      budget+
+    '<p class="hint">Best on weeds in active growth, over 12 °C by day and above 10 °C at night. Rain soon after, or drought, cuts the effect.</p>'+
+    '<p class="hint">'+(gran
+      ? 'Moss blackens in days and needs raking out. Iron stains stone, decking and clothing.'
+      : 'Full effect takes two to three weeks — judge it then, not sooner. Drifts readily onto other plants, so never spray in wind.')+'</p>'+
+    '<p class="hint">Maximum treatments per season is on the label and legally binding — check the bottle before repeating.</p>'+
+    '</div></details>'+
+  '</div>';
+}
+
+function flagHTML(f){return '<div class="flag'+(f.t==='info'?' info':'')+'"><b>'+f.h+'</b> '+f.b+'</div>'}
+
+const MARK={done:'\u2713',missed:'\u2715',due:'\u25CF',upcoming:'\u25CB',pretrack:'\u00B7',away:'\u2708',overdue:'\u0021',skipped:'\u2298'};
+
+function appRow(r,p,s){
+  const lab={done:'Done',missed:'Missed',due:'This week',upcoming:'',
+             pretrack:'Before tracking',away:'Away',overdue:'Overdue',skipped:'Skipped'}[r.status];
+  const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
+  const title=lab||(s.form==='combi'?(r.method==='gran'?'Granular':'Liquid'):cap(r.phase));
+  const bits=[];
+  if(s.form==='combi') bits.push(r.method==='gran'?'granular':'liquid');
+  if(lab&&r.phase) bits.push(r.phase);
+  if(r.growIn) bits.push('grow-in');
+  if(r.split) bits.push('pass '+(r.split.k+1)+' of '+r.split.n);
+  if(r.status!=='done'&&r.status!=='pretrack'&&Math.abs(r.gN-r.gNbase)>0.05) bits.push('adjusted');
+  if(r.status==='away') return '<div class="app s-away">'+
+    '<input type="checkbox" class="box" data-wk="'+r.week+'" aria-label="Home this week">'+
+    '<span class="dt">'+r.date.getDate()+' '+MONTHS_S[r.date.getMonth()]+'</span>'+
+    '<span class="lb">Away<span class="sm"> skipped</span></span>'+
+    '<span class="ds">—</span></div>';
+  const dose = r.status==='done'
+    ? (r.doneKg?mass(r.doneKg):r.doneGN.toFixed(2)+' g N/m²')
+    : (p.npk.n>0?mass(r.kg):'—');
+  const sub = r.status==='done'
+    ? (r.doneDate?parseISO(r.doneDate).toLocaleDateString(undefined,{day:'numeric',month:'short'}):'')
+    : r.gN.toFixed(2)+' g N/m²'+(r.litres?' · '+vol(r.litres):'');
+  return '<div class="app s-'+r.status+(s.form==='combi'?' m-'+r.method:'')+'">'+
+    (r.status==='due'||r.status==='upcoming'||r.status==='away'
+      ? '<input type="checkbox" class="box" data-wk="'+r.week+'"'+(r.away?'':' checked')+
+        ' aria-label="Home this week">'
+      : '<span class="mk">'+MARK[r.status]+'</span>')+
+    '<span class="dt">'+r.date.getDate()+' '+MONTHS_S[r.date.getMonth()]+'</span>'+
+    '<span class="lb">'+title+(bits.length?'<span class="sm"> '+bits.join(' · ')+'</span>':'')+'</span>'+
+    '<span class="ds">'+dose+'<small>'+sub+'</small></span>'+
+  '</div>';
+}
+
+function ironRow(r,s){
+  const lab={done:'Done',missed:'Missed',due:'This week',upcoming:'',away:'Away'}[r.status];
+  const dose = r.status==='away' ? '—' : mass(r.total/1000);
+  const sub  = r.status==='done' && r.doneDate
+    ? parseISO(r.doneDate).toLocaleDateString(undefined,{day:'numeric',month:'short'})
+    : r.gFeSO4.toFixed(2)+' g FeSO₄/m²';
+  return '<div class="app iron s-'+r.status+'">'+
+    '<span class="mk">'+(r.status==='done'?'\u2713':r.status==='missed'?'\u2715':'\u25C7')+'</span>'+
+    '<span class="dt">'+r.date.getDate()+' '+MONTHS_S[r.date.getMonth()]+'</span>'+
+    '<span class="lb"><b>Iron</b>'+(lab?' '+lab:'')+'<span class="sm"> '+r.purpose.toLowerCase()+'</span></span>'+
+    '<span class="ds">'+dose+'<small>'+sub+'</small></span></div>';
+}
+
+function roundsHTML(p,s){
+  if(!p.rounds.length) return '<div class="empty">No applications in this season window.</div>';
+  const all=p.rounds.filter(r=>!r.merged).concat(p.iron?p.iron.rounds:[]).sort((a,b)=>a.date-b.date);
+  const g=[];
+  all.forEach(r=>{
+    const k=r.date.getMonth(), last=g[g.length-1];
+    if(!last||last.k!==k) g.push({k,items:[r]}); else last.items.push(r);
+  });
+  /* Open the month holding the next thing to do, not the month the calendar
+     happens to be in — by late July everything in July is already done and the
+     next application sits in August. */
+  const nextUp=all.find(r=>r.status==='due')||all.find(r=>r.status==='upcoming');
+  const openMonth = nextUp ? nextUp.date.getMonth()
+    : (all.length ? all[all.length-1].date.getMonth() : new Date().getMonth());
+  return g.map(m=>{
+    const feeds=m.items.filter(x=>x.kind!=='iron');
+    const done=feeds.filter(x=>x.status==='done').length;
+    const kg=feeds.reduce((a,r)=>a+r.kg,0);
+    const mixed=s.form==='combi';
+    const open=m.k===openMonth;
+    const bits=[];
+    if(done) bits.push(done+'/'+feeds.length+' done');
+    else if(m.items.length) bits.push(m.items.length+' planned');
+    if(p.npk.n>0&&feeds.length&&!mixed) bits.push(mass(kg));
+    else if(mixed&&feeds.length){
+      const g=feeds.filter(x=>x.method==='gran').reduce((a,r)=>a+r.kg,0);
+      const l=feeds.filter(x=>x.method==='liq').reduce((a,r)=>a+r.kg,0);
+      if(g>0) bits.push(mass(g)+' gran');
+      if(l>0) bits.push(mass(l)+' liq');
+    }
+    return '<details class="appgrp"'+(open?' open':'')+'><summary><div class="apphead">'+
+      '<span class="nm">'+MONTHS[m.k]+'</span>'+
+      '<span class="tot">'+bits.join(' · ')+'</span></div></summary>'+
+      m.items.map(r=>r.kind==='iron'?ironRow(r,s):appRow(r,p,s)).join('')+'</details>';
+  }).join('');
+}
+
+function goTab(name){
+  document.querySelectorAll('nav.tabs button').forEach(b=>{
+    const on=b.dataset.tab===name;
+    b.setAttribute('aria-selected',on);
+    F('p-'+b.dataset.tab).hidden=!on;
+  });
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+/* Home: what to do now, and nothing that needs reading twice. */
+function renderHome(){
+  if(!plan) refreshPlan();
+  const p=plan, s=state.settings, yr=String(new Date().getFullYear());
+  const today=new Date(); today.setHours(0,0,0,0);
+
+  // --- next action ---
+  const r=p.rounds.find(x=>x.status==='overdue')||p.rounds.find(x=>x.status==='due')||p.rounds.find(x=>x.status==='upcoming');
+  let nextCard;
+  if(!r){
+    nextCard='<div class="quiet">Nothing left to apply this season. Feeding resumes in week '+p.start+'.</div>';
+  }else if(p.npk.n<=0){
+    nextCard='<div class="quiet">Set your fertiliser N-P-K on the Plan tab to see quantities.</div>';
+  }else{
+    const days=Math.round((r.date-today)/86400000);
+    const overdue=r.status==='overdue';
+    const daysLate=overdue?Math.round((today-r.date)/86400000):0;
+    const splitTag=r.split?' · pass '+(r.split.k+1)+' of '+r.split.n:'';
+    const when = overdue
+      ? (daysLate<=0?'Was due today'
+         : daysLate+' day'+(daysLate>1?'s':'')+' overdue')
+      : r.status==='due'
+      ? (days<=0?'Due today — last day of the window'
+         : 'Due this week · any day up to '+r.date.toLocaleDateString(undefined,{day:'numeric',month:'long'}))
+      : 'In '+days+' days · week of '+r.weekStart.toLocaleDateString(undefined,{day:'numeric',month:'long'});
+    const mix = r.litres
+      ? '<div class="mix"><span>Water <b>'+vol(r.litres)+'</b></span>'+
+        '<span>Rate <b>'+Math.round(r.sprayMl)+' mL/m²</b></span>'+
+        '<span>Strength <b>'+r.concN.toFixed(1)+' g N/L</b></span></div>'
+      : '';
+    nextCard='<div class="next'+(overdue?' overdue':'')+'"><div class="when">'+
+      (overdue?'Missed feed':'Next feed')+'</div>'+
+      '<div class="what">'+mass(r.kg)+' of '+esc(s.npk)+'</div>'+
+      '<div class="sub">'+when+' · '+r.gN.toFixed(2)+' g N/m² · '+r.phase+
+        (r.growIn?' · grow-in':'')+splitTag+'</div>'+mix+
+      '<div class="nextbtns"><button class="btn sm" id="homeLog">Log it</button>'+
+        (overdue?'<button class="btn sm ghost" id="homeSkip">Skip it</button>':'')+
+      '</div></div>';
+  }
+
+  // --- next iron, if it is part of the plan ---
+  let ironLine='';
+  if(p.iron&&p.iron.next){
+    const ir=p.iron.next;
+    const d=Math.round((ir.date-today)/86400000);
+    ironLine='<div class="recon ahead" style="margin-top:9px"><b>Iron</b> — '+
+      Math.round(ir.total)+' g of product, '+
+      (ir.status==='due'?'due this week'
+        :'week of '+ir.weekStart.toLocaleDateString(undefined,{day:'numeric',month:'long'}))+
+      '<div class="sub">'+ir.gFeSO4.toFixed(2)+' g FeSO₄/m² · '+ir.purpose.toLowerCase()+
+      ' · in '+vol(ir.litres)+' of water</div></div>';
+  }
+
+  // --- season progress ---
+  const applied=state.entries.filter(e=>e.type==='fert'&&e.date.startsWith(yr))
+                             .reduce((a,e)=>a+entryGN(e,s),0);
+  const pct=Math.min(100,p.target>0?applied/p.target*100:0);
+
+  // --- quick facts ---
+  const yrE=state.entries.filter(e=>e.date.startsWith(yr));
+  const mows=yrE.filter(e=>e.type==='mow').map(e=>e.date).sort();
+  const feeds=yrE.filter(e=>e.type==='fert').map(e=>e.date).sort();
+  const ago=d=>{const n=Math.floor((today-parseISO(d))/86400000);
+    return n<=0?'today':n===1?'1 day ago':n+' days ago';};
+
+  // --- only warnings that change what you do now ---
+  const alerts=p.flags.filter(f=>f.t==='warn').slice(0,2);
+
+  document.getElementById('homeOut').innerHTML=
+    positionHTML(p)+
+    '<div class="card"><p class="eyebrow">Next up</p>'+nextCard+ironLine+'</div>'+
+    '<div class="card"><p class="eyebrow">This season</p>'+
+      '<div class="headline"><span class="big">'+applied.toFixed(1)+'</span>'+
+        '<span class="unit">of '+p.target.toFixed(1)+' g N/m² applied</span>'+
+        '<span class="unit" style="margin-left:auto">'+Math.round(pct)+'%</span></div>'+
+      '<div class="progress"><i style="width:'+pct+'%"></i></div>'+
+      reconHTML(p,true).replace('class="recon','style="margin-top:10px" class="recon')+
+      '<div class="facts">'+
+        '<div><span class="k">Last feed</span><b>'+(feeds.length?ago(feeds[feeds.length-1]):'—')+'</b>'+
+          '<span class="u">'+feeds.length+' logged</span></div>'+
+        '<div><span class="k">Last mow</span><b>'+(mows.length?ago(mows[mows.length-1]):'—')+'</b>'+
+          '<span class="u">'+mows.length+' logged</span></div>'+
+        '<div><span class="k">Fertiliser left</span><b>'+
+          (p.npk.n>0?mass(p.rounds.filter(r=>r.status==='due'||r.status==='upcoming')
+                          .reduce((a,r)=>a+r.kg,0)):'—')+'</b>'+
+          '<span class="u">'+(p.counts.due+p.counts.upcoming)+' application'+
+          ((p.counts.due+p.counts.upcoming)===1?'':'s')+' to go</span></div>'+
+      '</div>'+
+    '</div>'+
+    (alerts.length?'<div class="card"><p class="eyebrow">Worth knowing</p>'+
+      alerts.map(flagHTML).join('')+'</div>':'');
+
+  const btn=document.getElementById('homeLog');
+  if(btn) btn.onclick=()=>{
+    const target = (r.status==='due'||r.status==='overdue') ? today : (r.date<today?today:r.date);
+    selected=iso(target);
+    view=new Date(parseISO(selected).getFullYear(),parseISO(selected).getMonth(),1);
+    goTab('log'); renderCal(); renderDay(); openSheet('fert',r.kg);
+  };
+  const skip=document.getElementById('homeSkip');
+  if(skip) skip.onclick=()=>{
+    const key=r.week+':'+(r.split?r.split.k:'');
+    state.settings.skips=[...new Set([...(state.settings.skips||[]),key])];
+    save(); refreshPlan(); renderHome(); renderPlan(); renderCal(); renderDay(); renderSeason();
+  };
+}
+
+function planSummary(p,s){
+  const cad = s.form==='combi'
+    ? s.rounds+' rounds + '+(s.cadence==='weekly'?'weekly':'2-weekly')+' liquid'
+    : {weekly:'weekly',biweekly:'every 2 weeks',rounds:s.rounds+' rounds'}[s.cadence];
+  const bits=['<b>'+s.area+' m²</b>', REGION[s.region].name,
+              {low:'low input',family:'family lawn',high:'high input'}[s.grade],
+              cad, {gran:'granular',liq:'sprayed',combi:'combination'}[s.form]];
+  if(p.npk.n>0){
+    if(s.form==='combi') bits.push('<b>'+esc(s.npk)+'</b> + <b>'+esc(s.npkLiq||s.npk)+'</b>');
+    else bits.push('<b>'+esc(s.form==='liq'?(s.npkLiq||s.npk):s.npk)+'</b>');
+  }
+  if(isLiq(s.form)&&s.sprayVol>0) bits.push(s.sprayVol+' L');
+  return bits.join(' · ');
+}
+
+function heroHTML(p,s){
+  const st=p.status, applied=st.appliedAll||0;
+  const pct=p.target>0?Math.min(100,applied/p.target*100):0;
+  const chip = !st.tracking ? ['idle','Not started']
+    : st.state==='ontrack' ? ['ok','On track']
+    : st.state==='behind'  ? ['behind','Behind '+Math.abs(st.delta).toFixed(1)]
+    :                        ['ahead','Ahead '+Math.abs(st.delta).toFixed(1)];
+  const cad = s.form==='combi'
+    ? s.rounds+' granular + '+p.rounds.filter(r=>r.method==='liq').length+' liquid'
+    : {weekly:'weekly',biweekly:'every 2 weeks',rounds:s.rounds+' rounds'}[s.cadence];
+
+  return '<div class="card hero">'+
+    '<div class="heroRow">'+
+      '<div><span class="heroBig">'+p.target.toFixed(1)+'</span>'+
+        '<span class="heroUnit">g N/m² this year</span></div>'+
+      (p.npk.n<=0?'' : s.form==='combi'
+        ? '<div class="heroSide"><b>'+mass(p.rounds.filter(r=>r.method==='gran').reduce((a,r)=>a+r.kg,0))+
+            '</b><span>'+esc(s.npk)+'</span><b style="margin-top:4px">'+
+            mass(p.rounds.filter(r=>r.method==='liq').reduce((a,r)=>a+r.kg,0))+
+            '</b><span>'+esc(s.npkLiq||s.npk)+'</span></div>'
+        : '<div class="heroSide"><b>'+mass(p.totalKg)+'</b><span>of '+esc(s.npk)+'</span></div>')+
+    '</div>'+
+    '<div class="progress"><i style="width:'+pct+'%"></i></div>'+
+    '<div class="heroStat"><span class="chip '+chip[0]+'">'+chip[1]+'</span>'+
+      '<span>'+applied.toFixed(1)+' applied · '+p.rounds.length+' applications · '+cad+'</span></div>'+
+    '<details class="disc"><summary>Season window and detail</summary><div class="body">'+
+      seasonSourceHTML(p)+
+      (p.slow?'<p class="hint">Slow-release: rounds go down earlier, each feeding for about '+SLOW_WEEKS+' weeks. Single-dose ceiling '+p.maxDose+' g N/m².'+
+        (s.form==='combi'?' Granular and liquid can share a week — the granular is a slow base, the spray a top-up on top.':'')+'</p>':'')+
+      '<p class="hint">Weeks '+p.start+'–'+p.end+' · peak weekly rate '+p.peakWeek.toFixed(2)+
+        ' g N/m², against a 0.75 maximum.</p>'+
+      (p.boosted>0.05?'<p class="hint">Includes '+p.boosted.toFixed(1)+' g N/m² above maintenance for '+
+        ((p.growIn&&s.repair)?'grow-in and repair':p.growIn?'grow-in':'repair')+'.</p>':'')+
+      reconHTML(p)+
+    '</div></details>'+
+  '</div>';
+}
+
+function renderPlan(){
+  readSettings(); refreshPlan();
+  const p=plan, s=state.settings;
+  const pOK=Math.abs(p.pIdx-14)<=8, kLow=p.kIdx<40, kHigh=p.kIdx>110, kOK=!kLow&&!kHigh;
+  const cadName={weekly:'Every week',biweekly:'Every 2 weeks',rounds:s.rounds+' rounds'}[s.cadence];
+
+  document.getElementById('planOut').querySelectorAll?.('[data-wk]');
+  const ip=p.iron;
+  document.getElementById('ironOut').innerHTML = !ip ? '' :
+    '<div class="ironbar">'+
+      '<div>Per year<b>'+ip.plannedFeSO4.toFixed(ip.us?1:2)+'</b>g FeSO₄/m²</div>'+
+      '<div>Each time<b>'+Math.round(ip.rounds[0].total)+' g</b>over '+s.area+' m²</div>'+
+      '<div>Applications<b>'+ip.rounds.length+'</b>'+ip.label.toLowerCase()+'</div>'+
+    '</div>'+
+    '<p class="hint">Dissolve and spray at about '+ip.ml+' mL/m² — '+vol(ip.rounds[0].litres)+
+      ' per pass here. Iron stains stone, decking and clothing.</p>'+
+    ip.flags.map(flagHTML).join('');
+  document.getElementById('planSummary').innerHTML=planSummary(p,s);
+  document.getElementById('plenOut').innerHTML=plenrensHTML(p,s,state.entries);
+  document.getElementById('planOut').innerHTML=
+  heroHTML(p,s)+
+
+  '<div class="card">'+
+    '<p class="eyebrow">Applications</p>'+
+    roundsHTML(p,s)+
+    p.flags.map(flagHTML).join('')+
+    '<details class="disc"><summary>How to read this</summary><div class="body">'+
+      '<p class="hint" style="margin:0 0 6px">Untick any week you will be away — its feed is shared across the others.</p>'+
+      '<p class="hint" style="margin:0">Dates are guides. Hold the first until the soil reaches 5–6 °C and growth starts. Spread on dry grass before rain, never in strong sun.</p>'+
+    '</div></details>'+
+  '</div>'+
+
+  sprayHTML(p,s)+
+
+  '<div class="card">'+
+    '<p class="eyebrow">'+(s.form==='combi'?'Do your two bags cover P and K?':'Is '+esc(s.npk)+' the right bag?')+'</p>'+
+    '<p style="font-size:13px;margin:0 0 4px">Grass takes nutrients up in near-constant proportions. Across everything you apply, aim for <span class="num">P 14</span>, <span class="num">K 65</span> against N at 100.</p>'+
+    '<div class="balance">'+
+      '<div>P index<b class="'+(pOK?'ok':'off')+'">'+p.pIdx.toFixed(0)+'</b>target 14</div>'+
+      '<div>K index<b class="'+(kLow?'off':'ok')+'">'+p.kIdx.toFixed(0)+'</b>target 65</div>'+
+    '</div>'+
+    (pOK&&kOK
+      ? '<p class="hint">Good balance. Same bag all season — an "autumn" fertiliser buys you nothing.</p>'
+      : '')+
+    (!pOK?'<div class="flag">'+(p.pIdx>14
+      ? '<b>High in phosphorus.</b> The surplus mostly leaches away.'
+      : '<b>Low in phosphorus.</b> Fine on established soil; watch it on sand or after overseeding.')+'</div>':'')+
+    (kLow?'<div class="flag"><b>Light on potassium.</b> Check for it if colour goes patchy despite enough nitrogen.</div>':'')+
+    (kHigh?'<div class="flag info"><b>High potassium is fine.</b> Grass banks the surplus harmlessly. It just will not improve winter survival, whatever the bag claims.</div>':'')+
+    combiBalHTML(p)+
+    '<p class="hint">Phosphorus is most available at pH 6.0–6.5. Norwegian garden soil often sits below that — that is when liming pays.</p>'+
+  '</div>';
+  document.getElementById('planOut').querySelectorAll('[data-wk]').forEach(b=>b.onchange=()=>{
+    const wk=Number(b.dataset.wk), a=new Set(state.settings.away||[]);
+    if(b.checked) a.delete(wk); else a.add(wk);
+    state.settings.away=[...a];
+    save(); refreshPlan(); renderPlan(); renderSeason(); renderHome(); renderCal(); renderDay();
+  });
+  save();
+}
+
+/* ============================================================
+   Render — Season
+   ============================================================ */
+function seasonYears(){
+  const now=new Date().getFullYear();
+  const ys=new Set([now]);
+  state.entries.forEach(e=>{const y=Number(String(e.date).slice(0,4)); if(y) ys.add(y);});
+  return [...ys].sort((a,b)=>a-b);
+}
+function renderSeason(){
+  if(!plan) refreshPlan();
+  const now=new Date().getFullYear();
+  const years=seasonYears();
+  if(viewYear>now) viewYear=now;
+  if(viewYear<years[0]) viewYear=years[0];
+  const yr=viewYear;
+  const p = yr===now ? plan : computePlan(state.settings,state.entries,yr);
+  document.getElementById('seasonYear').textContent=yr;
+  F('yrPrev').disabled = yr<=years[0];
+  F('yrNext').disabled = yr>=now;
+
+  /* ---- Season chart, rebuilt ----
+     Two questions, two lanes. The main lane is the feeding year: the planned
+     weekly-N curve as a filled area, with what you actually applied as dots
+     sitting on it. A slim lane beneath is the mowing rhythm, on its own scale
+     so a count-per-week never shares an axis with g N/m². A soft "now" marker
+     ties the two together in time. */
+  const W=340, H=208, L=30, Rr=10, Tp=14;
+  const plotB=112;                       // baseline of the N curve
+  const monthY=plotB+13;                 // month labels sit just under the curve
+  const mowTop=plotB+26, mowH=34;        // mowing lane below the labels
+  const mowBot=mowTop+mowH;
+
+  const w0=Math.max(1,Math.min(p.start-1,12)), w1=Math.min(53,Math.max(p.end+1,46));
+  const X=k=>L+(k-w0)/(w1-w0)*(W-L-Rr);
+
+  const applied=new Array(54).fill(0);
+  state.entries.filter(e=>e.type==='fert'&&e.date.startsWith(String(yr)))
+    .forEach(e=>{applied[isoWeekOf(parseISO(e.date))]+=entryGN(e,state.settings);});
+  const maxW=Math.max(...p.weekly), maxA=Math.max(...applied);
+  const top=Math.max(maxW,Math.min(maxA,maxW*3),0.01);
+  const clipped=maxA>top+1e-9;
+  const Y=v=>Math.max(Tp,plotB-(Math.min(v,top)/top)*(plotB-Tp));
+
+  // smooth-ish area + line for the plan
+  let area='M'+X(w0).toFixed(1)+','+plotB, line='';
+  for(let i=w0;i<=w1;i++){
+    const x=X(i).toFixed(1), y=Y(p.weekly[i]||0).toFixed(1);
+    area+=' L'+x+','+y; line+=(line?' L':'M')+x+','+y;
+  }
+  area+=' L'+X(w1).toFixed(1)+','+plotB+' Z';
+
+  // applied dots — one per week that had a feed, sitting at its applied height
+  let dots='';
+  for(let i=w0;i<=w1;i++) if(applied[i]>0){
+    const x=X(i).toFixed(1), y=Y(applied[i]).toFixed(1), yc=Y(p.weekly[i]||0).toFixed(1);
+    dots+='<line x1="'+x+'" y1="'+yc+'" x2="'+x+'" y2="'+y+'" style="stroke:var(--soil)" stroke-width="1" opacity=".35"/>'+
+          '<circle cx="'+x+'" cy="'+y+'" r="3.2" style="fill:var(--soil)"/>'+
+          '<circle cx="'+x+'" cy="'+y+'" r="3.2" style="fill:none;stroke:var(--card);stroke-width:1.5"/>';
+  }
+
+  // peak marker on the plan curve
+  let peakMark='';
+  { let pk=w0; for(let i=w0;i<=w1;i++) if((p.weekly[i]||0)>(p.weekly[pk]||0)) pk=i;
+    if((p.weekly[pk]||0)>0){
+      const x=X(pk).toFixed(1), y=Y(p.weekly[pk]).toFixed(1);
+      const ly=Math.max(Tp-2,Number(y)-7);
+      // if 'now' lands on the same week, nudge the peak value to the left so the
+      // two labels do not stack
+      const nowW = String(new Date().getFullYear())===String(yr) ? isoWeekOf(new Date()) : -99;
+      const clash = Math.abs(nowW-pk)<=1;
+      const anchor = clash?'end':'middle';
+      const lx = clash?(Number(x)-5):Number(x);
+      peakMark='<circle cx="'+x+'" cy="'+y+'" r="2.5" style="fill:var(--chloro)"/>'+
+        '<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="'+anchor+'" '+
+        'font-family="IBM Plex Mono" font-size="8.5" font-weight="600" style="fill:var(--ink)">'+p.weekly[pk].toFixed(2)+'</text>';
+    }
+  }
+
+  // now marker (only for the live year)
+  let nowMark='';
+  if(String(new Date().getFullYear())===String(yr)){
+    const nw=isoWeekOf(new Date());
+    if(nw>=w0&&nw<=w1){
+      const x=X(nw).toFixed(1);
+      /* Dashed line through both lanes; label tucked into the gap between the
+         curve baseline and the month row, right of the line, where nothing else
+         draws — so it never sits under a mow bar or the peak value. */
+      nowMark='<line x1="'+x+'" y1="'+(Tp+4)+'" x2="'+x+'" y2="'+mowBot+'" '+
+        'style="stroke:var(--muted)" stroke-width="1" stroke-dasharray="2 3" opacity=".5"/>'+
+        '<text x="'+(Number(x)+3).toFixed(1)+'" y="'+(plotB-3)+'" text-anchor="start" font-family="IBM Plex Mono" '+
+        'font-size="7" style="fill:var(--muted)">now</text>';
+    }
+  }
+
+  // ---- mowing lane: bars per week, own scale, labelled by rhythm not count ----
+  const mowWk=new Array(54).fill(0);
+  state.entries.filter(e=>e.type==='mow'&&e.date.startsWith(String(yr)))
+    .forEach(e=>{const w=isoWeekOf(parseISO(e.date)); if(w>=0&&w<54) mowWk[w]++;});
+  const anyMow=mowWk.some(n=>n>0);
+  const MOW_FULL=4;   // 4 cuts in a week fills the lane; weekly reads ~quarter
+  let mowBars='';
+  if(anyMow){
+    for(let i=w0;i<=w1;i++) if(mowWk[i]>0){
+      const bh=Math.max(4,(Math.min(mowWk[i],MOW_FULL)/MOW_FULL)*(mowH-4));
+      mowBars+='<rect x="'+(X(i)-2.4).toFixed(1)+'" y="'+(mowBot-bh).toFixed(1)+
+        '" width="4.8" rx="1.6" height="'+bh.toFixed(1)+'" style="fill:var(--frost)" opacity=".9"/>';
+    }
+  }
+
+  const ticks=[];
+  for(let mo=0;mo<12;mo++){
+    const wk=isoWeekOf(new Date(yr,mo,15));
+    if(wk>=w0&&wk<=w1) ticks.push({w:wk,l:MONTHS_S[mo]});
+  }
+
+  document.getElementById('chart').innerHTML=
+    // horizontal baselines
+    '<line x1="'+L+'" y1="'+plotB+'" x2="'+(W-Rr)+'" y2="'+plotB+'" style="stroke:var(--card-line)"/>'+
+    '<line x1="'+L+'" y1="'+mowBot+'" x2="'+(W-Rr)+'" y2="'+mowBot+'" style="stroke:var(--card-line)"/>'+
+    nowMark+
+    // plan
+    '<path d="'+area+'" style="fill:var(--chloro-soft)"/>'+
+    '<path d="'+line+'" style="fill:none;stroke:var(--chloro)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+
+    peakMark+dots+mowBars+
+    // y label for the N lane
+    '<text x="'+L+'" y="'+(Tp-4)+'" font-family="IBM Plex Mono" font-size="8" style="fill:var(--muted)">g N/m²/wk</text>'+
+    // lane label for mowing
+    '<text x="'+L+'" y="'+(mowTop+2)+'" font-family="IBM Plex Mono" font-size="7" style="fill:var(--muted)">mows/wk</text>'+
+    // month ticks along the very bottom
+    ticks.map(t=>'<text x="'+X(t.w).toFixed(1)+'" y="'+monthY+'" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" style="fill:var(--muted)">'+t.l+'</text>').join('')+
+    (clipped?'<text x="'+(W-Rr)+'" y="'+(Tp-4)+'" text-anchor="end" font-family="IBM Plex Mono" font-size="8" style="fill:var(--soil)">peak '+maxA.toFixed(1)+' off scale</text>':'');
+
+  const yrE=state.entries.filter(e=>e.date.startsWith(String(yr)));
+  const totN=applied.reduce((a,b)=>a+b,0);
+  const autN=applied.slice(p.autWk).reduce((a,b)=>a+b,0);
+  const mows=yrE.filter(e=>e.type==='mow');
+  const lastMow=mows.length?mows.map(e=>e.date).sort().pop():null;
+
+  document.getElementById('seasonStats').innerHTML=
+    '<div class="stat"><div class="k">Nitrogen applied</div><div class="v">'+totN.toFixed(1)+'</div><div class="s">of '+p.target.toFixed(1)+' g N/m² planned</div></div>'+
+    '<div class="stat"><div class="k">Since 1 Sep</div><div class="v">'+autN.toFixed(1)+'</div><div class="s">ceiling '+AUTUMN_CAP+' g N/m²</div></div>'+
+    '<div class="stat"><div class="k">Mows logged</div><div class="v">'+mows.length+'</div><div class="s">'+
+      (lastMow?'last '+parseISO(lastMow).toLocaleDateString(undefined,{day:'numeric',month:'short'}):'none yet')+'</div></div>'+
+    '<div class="stat"><div class="k">Feeds logged</div><div class="v">'+yrE.filter(e=>e.type==='fert').length+
+      '</div><div class="s">of '+p.rounds.length+' planned</div></div>';
+  document.getElementById('seasonBar').style.width=Math.min(100,totN/p.target*100)+'%';
+
+  let fl='';
+  if(yr!==now){
+    const pct=p.target>0?totN/p.target*100:0;
+    fl+='<div class="flag info"><b>'+yr+' is closed.</b> You applied '+totN.toFixed(1)+
+      ' of '+p.target.toFixed(1)+' g N/m² — '+Math.round(pct)+'% of plan, across '+
+      yrE.filter(e=>e.type==='fert').length+' feeds and '+yrE.filter(e=>e.type==='mow').length+' mows.</div>';
+  }
+  // iron for the viewed season, from every source
+  const ironE=yrE.filter(e=>e.type==='iron');
+  const ironTot=ironE.reduce((a,e)=>a+entryFeSO4(e,state.settings),0);
+  if(ironTot>0){
+    const over=ironTot>IRON_LEGAL;
+    fl+='<div class="flag'+(over?'':' info')+'"><b>Iron: '+ironTot.toFixed(2)+' g FeSO₄/m² this year.</b> '+
+      (over
+        ? 'Past the '+IRON_LEGAL+' g/m² line where iron stops being a feed and counts as moss control. Fine if that was the intention — but only with a product approved for it.'
+        : 'Within the feeding range. Nutrition needs 0.07–0.14, colour 0.20–0.40 g/m² a year.')+'</div>';
+  }
+  // once nitrogen has to stop, iron is the only lever left on colour
+  if(yr===now&&autN>=AUTUMN_CAP*0.8&&!state.settings.ironOn)
+    fl+='<div class="flag info"><b>Want colour without more nitrogen?</b> You are near the autumn nitrogen ceiling, which is exactly when the lawn starts to pale. Iron deepens the colour without pushing growth. Turn it on under Plan.</div>';
+
+  if(autN>AUTUMN_CAP) fl+='<div class="flag"><b>Past the autumn ceiling.</b> '+autN.toFixed(1)+
+    ' g N/m² since 1 September. Doubling that limit multiplies snow mould four to five fold and cuts frost tolerance sharply. Stop feeding now.</div>';
+  /* Only once mowing has actually stopped. p.endSrc is set by the same test
+     the season end uses — a late-season mow, at least a fortnight ago. Firing
+     on any mow told you in July to stop feeding in August. */
+  if(lastMow&&yr===now&&p.endSrc){
+    const stop=new Date(parseISO(lastMow).getTime()+14*86400000);
+    fl+='<div class="flag info"><b>Last feed of the year.</b> You last mowed '+
+      parseISO(lastMow).toLocaleDateString(undefined,{day:'numeric',month:'long'})+
+      ', so the final feed is about two weeks later — around '+
+      stop.toLocaleDateString(undefined,{day:'numeric',month:'long'})+'. Small, not one last big hit.</div>';
+  }
+  document.getElementById('seasonFlags').innerHTML=fl;
+
+  const counts=TYPES.map(t=>({t,n:yrE.filter(e=>e.type===t.id).length})).filter(x=>x.n>0);
+  document.getElementById('seasonCounts').innerHTML= counts.length
+    ? counts.map(x=>'<div class="round" style="grid-template-columns:3px 1fr auto">'+
+        '<div class="bar" style="background:'+x.t.color+';height:16px;border-radius:2px"></div>'+
+        '<div class="what">'+x.t.label+'</div><div class="dose">'+x.n+'</div></div>').join('')
+    : '<div class="empty">Nothing logged this year yet.</div>';
+}
+
+/* ============================================================
+   Settings
+   ============================================================ */
+const F=id=>document.getElementById(id);
+const segGet=id=>F(id).dataset.cur;
+const LIQ_CAD=['weekly','biweekly'];
+function segSet(id,v){
+  const el=F(id); el.dataset.cur=v;
+  el.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));
+}
+function wireSeg(id,onChange){
+  F(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{ segSet(id,b.dataset.v); onChange(); });
+}
+function readSettings(){
+  state.settings={
+    area:Math.max(1,parseFloat(F('area').value)||200),
+    region:F('region').value, grade:segGet('grade'),
+    clip:F('clipBox').checked?'remove':'mulch', shade:segGet('shade'), soil:F('soil').value, slowRel:F('slowRel').checked,
+    cadence:segGet('form')==='gran' ? 'rounds' : segGet('cadence'),
+    rounds:Number(segGet('granCad'))||4,
+    granShare:Number(F('granShare').value)||50,
+    npkLiq:F('npkLiq').value.trim()||'15-0-0',
+    form:segGet('form'),
+    npk:F('npk').value.trim()||'14-3-15', oxide:F('oxide').value,
+    repair:F('repair2').checked, uptake:F('uptake').value,
+    tank:Math.max(1,parseFloat(F('tank').value)||15),
+    ironOn:F('ironOn').checked, ironPurpose:F('ironPurpose').value,
+    ironFe:Math.max(0.5,parseFloat(F('ironFe').value)||IRON_FE),
+    ironInterval:Number(F('ironInterval').value)||3,
+    sprayVol:Math.max(0,parseFloat(F('sprayVol').value)||0),
+    plenProd:F('plenProd').value,
+    plenArea:Math.max(0,parseFloat(F('plenArea').value)||0),
+    away:Array.isArray(state.settings.away)?state.settings.away:[]
+  };
+}
+function writeSettings(){
+  const s=state.settings;
+  ['area','region','soil','npk','npkLiq','oxide','tank','uptake','plenProd','plenArea','ironPurpose','ironFe','ironInterval']
+    .forEach(k=>{F(k).value=s[k];});
+  segSet('form',s.form); segSet('grade',s.grade||'family'); segSet('shade',s.shade);
+  segSet('cadence',LIQ_CAD.includes(s.cadence)?s.cadence:'biweekly');
+  segSet('granCad',String(Math.min(6,Math.max(4,Number(s.rounds)||4))));
+  F('granShare').value=s.granShare||50; F('shareVal').textContent=(s.granShare||50)+'%';
+  F('clipBox').checked = s.clip==='remove';
+  F('slowRel').checked = !!s.slowRel;
+  F('uptake').value=s.uptake; F('tank').value=s.tank;
+  F('plenProd').value=s.plenProd; F('plenArea').value=s.plenArea||'';
+  F('sprayVol').value=s.sprayVol||'';
+  F('ironOn').checked=!!s.ironOn; F('ironPurpose').value=s.ironPurpose; F('ironFe').value=s.ironFe;
+  F('ironInterval').value=s.ironInterval||3;
+  F('repair2').checked=!!s.repair;
+  syncCadence();
+}
+function syncCadence(){
+  const f=segGet('form'), liq=isLiq(f), combi=f==='combi', gran=f==='gran'||combi;
+  F('granBlock').hidden = !gran;
+  F('liqBlock').hidden  = !liq;
+  F('shareField').hidden = !combi;
+  F('granCadLabel').textContent = combi?'Granular rounds':'Rounds per season';
+  F('cadLabel').textContent     = combi?'Liquid feed every':'Feed every';
+  F('npkLabel').textContent     = combi?'Granular fertiliser':'Fertiliser';
+  F('npkLiqLabel').textContent  = combi?'Liquid fertiliser':'Fertiliser';
+  F('sprayFields').hidden = !liq;
+  F('volFields').hidden = !liq;
+  F('slowField').hidden = f==='liq';
+  F('ironFieldsPlan').hidden = !F('ironOn').checked;
+  F('ironIntervalField').hidden = !F('ironOn').checked || F('ironPurpose').value!=='colorUS';
+  if(document.getElementById('volEcho')) echoVol();
+}
+function save(){Store.set(store);}
+
+/* ============================================================
+   Sheet
+   ============================================================ */
+function renderLawnBar(){
+  const s=state.settings;
+  F('lnName').textContent=state.name;
+  F('lnMeta').textContent = store.lawns.length>1
+    ? store.lawns.length+' lawns' : 'tap to add another';
+}
+function renderLawnList(){
+  F('lawnList').innerHTML=store.lawns.map(l=>
+    '<div class="lawnrow'+(l.id===store.activeId?' on':'')+'">'+
+      '<button class="pick" data-pick="'+l.id+'"><b>'+esc(l.name)+'</b>'+
+        '<span>'+l.settings.area+' m² · '+l.entries.length+' logged</span></button>'+
+      '<button class="ic2" data-ren="'+l.id+'" aria-label="Rename">✎</button>'+
+      (store.lawns.length>1?'<button class="ic2" data-del="'+l.id+'" aria-label="Delete">×</button>':'')+
+    '</div>').join('');
+
+  F('lawnList').querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{
+    closeLawnSheet(); switchLawn(b.dataset.pick);
+  });
+  F('lawnList').querySelectorAll('[data-ren]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.ren;
+    closeLawnSheet();
+    if(id!==store.activeId) switchLawn(id);
+    openEdit();
+  });
+  F('lawnList').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    const l=store.lawns.find(x=>x.id===b.dataset.del);
+    if(!confirm('Delete "'+l.name+'" and everything logged against it?')) return;
+    store.lawns=store.lawns.filter(x=>x.id!==l.id);
+    if(store.activeId===l.id){ store.activeId=store.lawns[0].id; state=store.lawns[0]; writeSettings(); refreshPlan(); }
+    save(); renderLawnList(); renderLawnBar();
+    renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
+  });
+}
+function openEdit(){
+  F('lawnName').value=state.name;
+  F('editTitle').textContent=state.name;
+  writeSettings();
+  F('editScrim').hidden=false; F('editSheet').hidden=false;
+}
+function closeEdit(){
+  const nm=F('lawnName').value.trim();
+  if(nm&&nm!==state.name){ state.name=nm; }
+  readSettings(); save(); refreshPlan();
+  F('editScrim').hidden=true; F('editSheet').hidden=true;
+  renderLawnBar(); renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
+}
+
+function openLawnSheet(){
+  F('l_name').value=''; F('l_area').value=''; F('l_region').value=state.settings.region;
+  renderLawnList(); F('lawnScrim').hidden=false; F('lawnSheet').hidden=false;
+}
+function closeLawnSheet(){ F('lawnScrim').hidden=true; F('lawnSheet').hidden=true; }
+
+/* Import. Accepts either the multi-lawn export or the old single-lawn one.
+   Ids are regenerated so an "add" can never collide with existing lawns. */
+let pendingImport=null;
+
+function parseBackup(txt){
+  let d; try{ d=JSON.parse(txt); }catch(e){ return {error:'That file is not valid JSON.'}; }
+  if(!d||typeof d!=='object') return {error:'That file does not look like a Plenlogg backup.'};
+  let lawns=null;
+  if(Array.isArray(d.lawns)) lawns=d.lawns;
+  else if(d.settings&&typeof d.settings==='object') lawns=[{name:'Imported lawn',settings:d.settings,entries:d.entries||[]}];
+  if(!lawns||!lawns.length) return {error:'No lawns found in that file.'};
+  const clean=[];
+  for(const l of lawns){
+    if(!l||typeof l!=='object'||typeof l.settings!=='object'||!l.settings) continue;
+    clean.push({id:uid(),name:String(l.name||'Imported lawn').slice(0,60),
+      settings:{...DEFAULTS,...l.settings},
+      entries:(Array.isArray(l.entries)?l.entries:[]).filter(e=>e&&e.date&&e.type)
+              .map(e=>({...e,id:e.id||uid()}))});
+  }
+  if(!clean.length) return {error:'That file has no readable lawn data.'};
+  return {lawns:clean,entries:clean.reduce((a,l)=>a+l.entries.length,0)};
+}
+
+function applyShare(pct){
+  state.settings.granShare=pct;
+  if(document.getElementById('granShare')){ F('granShare').value=pct; F('shareVal').textContent=pct+'%'; }
+  save(); refreshPlan(); renderPlan();
+}
+
+function openImport(res){
+  pendingImport=res;
+  F('impSummary').textContent=res.lawns.length+' lawn'+(res.lawns.length===1?'':'s')+
+    ' and '+res.entries+' logged entr'+(res.entries===1?'y':'ies')+': '+
+    res.lawns.map(l=>l.name).join(', ')+'.';
+  F('impScrim').hidden=false; F('impSheet').hidden=false;
+}
+function closeImport(){ pendingImport=null; F('impScrim').hidden=true; F('impSheet').hidden=true; }
+
+function finishImport(mode){
+  if(!pendingImport) return;
+  const incoming=pendingImport.lawns;
+  if(mode==='replace'){
+    store.lawns=incoming; store.activeId=incoming[0].id;
+  }else{
+    store.lawns=store.lawns.concat(incoming); store.activeId=incoming[0].id;
+  }
+  state=store.lawns.find(l=>l.id===store.activeId);
+  closeImport(); save(); writeSettings(); refreshPlan();
+  viewYear=new Date().getFullYear();
+  renderLawnBar(); renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
+}
+
+function openSheet(type,kg,entry){
+  draftType=type||'mow'; draftKg=kg||null; editingId=entry?entry.id:null;
+  const selD=parseISO(selected), todayD=new Date(new Date().setHours(0,0,0,0));
+  F('sheetDate').textContent=selD.toLocaleDateString(undefined,
+      {weekday:'long',day:'numeric',month:'long',year:'numeric'})
+    +(selD>todayD?' — in the future, so this records work you have not done yet':'');
+  F('typeChips').innerHTML=TYPES.map(t=>
+    '<button class="chip" data-t="'+t.id+'" aria-pressed="'+(t.id===draftType)+'">'+t.label+'</button>').join('');
+  F('typeChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    draftType=c.dataset.t;
+    F('typeChips').querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x.dataset.t===draftType));
+    syncSheetFields();
+  });
+  syncSheetFields();
+  F('fKg').value=draftKg?(draftKg<1?draftKg.toFixed(2):draftKg.toFixed(1)):'';
+  echoKg();
+  F('fNpk').value=state.settings.npk;
+  F('mHt').value=''; F('sTemp').value=''; F('sTempEcho').textContent=''; F('note').value='';
+  F('iG').value=''; F('iFe').value=state.settings.ironFe||IRON_FE;
+  if(entry){
+    F('sheetTitle').textContent='Edit entry';
+    F('note').value=entry.note||'';
+    if(entry.kg) F('fKg').value=entry.kg;
+    if(entry.npk) F('fNpk').value=entry.npk;
+    if(entry.ht) F('mHt').value=entry.ht;
+    if(typeof entry.temp==='number') F('sTemp').value=entry.temp;
+    if(entry.g) F('iG').value=entry.g;
+    if(entry.fePct) F('iFe').value=entry.fePct;
+    echoKg(); echoTemp();
+  } else F('sheetTitle').textContent='Add work';
+  F('scrim').hidden=false; F('sheet').hidden=false;
+}
+function echoKg(){
+  const v=parseFloat(F('fKg').value);
+  F('fKgEcho').textContent = v>0 ? 'That is '+mass(v)+(v<0.02?' — did you mean grams?':'') : '';
+}
+F('fKg').addEventListener('input',echoKg);
+function syncSheetFields(){
+  F('fertFields').hidden=draftType!=='fert';
+  F('mowFields').hidden=draftType!=='mow';
+  F('soilFields').hidden=draftType!=='soil';
+  F('ironFields').hidden=draftType!=='iron';
+}
+function echoTemp(){
+  const v=parseFloat(F('sTemp').value);
+  F('sTempEcho').textContent = isNaN(v) ? ''
+    : v>=5 ? 'Warm enough to start feeding — this will set the season start.'
+    : 'Below 5 °C. Too cold to feed; the grass cannot use it yet.';
+}
+F('sTemp').addEventListener('input',echoTemp);
+function closeSheet(){editingId=null; F('scrim').hidden=true; F('sheet').hidden=true;}
+
+F('saveEntry').onclick=()=>{
+  const prev = editingId ? state.entries.find(x=>x.id===editingId) : null;
+  const e={id:prev?prev.id:Math.random().toString(36).slice(2,9),
+           date:prev?prev.date:selected,type:draftType,note:F('note').value.trim()};
+  if(draftType==='fert'){
+    const kg=parseFloat(F('fKg').value);
+    if(kg>0){
+      e.kg=kg; e.npk=F('fNpk').value.trim()||state.settings.npk;
+      const n=parseNPK(e.npk,state.settings.oxide).n;
+      e.gN = n>0 ? kg*1000*(n/100)/state.settings.area : 0;
+    }
+  }
+  if(draftType==='mow'){const h=parseFloat(F('mHt').value); if(h>0) e.ht=h;}
+  if(draftType==='soil'){const t=parseFloat(F('sTemp').value); if(!isNaN(t)) e.temp=t;}
+  if(draftType==='iron'){
+    const g=parseFloat(F('iG').value), fe=parseFloat(F('iFe').value)||IRON_FE;
+    if(g>0){ e.g=g; e.fePct=fe;
+      e.gFe=g*(fe/100)/state.settings.area;
+      e.gFeSO4=e.gFe/(IRON_FE/100); }
+  }
+  if(prev) state.entries[state.entries.indexOf(prev)]=e;
+  else state.entries.push(e);
+  editingId=null;
+  save(); closeSheet(); refreshPlan();
+  renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
+};
+F('cancelEntry').onclick=closeSheet;
+F('scrim').onclick=closeSheet;
+F('addBtn').onclick=()=>openSheet('mow');
+F('lawnSwitch').onclick=openLawnSheet;
+F('editLawn').onclick=openEdit;
+F('editDone').onclick=closeEdit;
+F('editScrim').onclick=closeEdit;
+function echoVol(){
+  const v=parseFloat(F('sprayVol').value), a=Math.max(1,parseFloat(F('area').value)||1);
+  if(!(v>0)){ F('volEcho').textContent='Auto — the app picks the volume.'; return; }
+  F('volEcho').textContent=(v*1000/a).toFixed(0)+' mL/m² over '+a+' m²';
+}
+F('sprayVol').addEventListener('input',echoVol);
+F('area').addEventListener('input',echoVol);
+
+F('importBtn').onclick=()=>F('importFile').click();
+F('importFile').onchange=()=>{
+  const f=F('importFile').files&&F('importFile').files[0];
+  if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    const res=parseBackup(String(rd.result));
+    F('importFile').value='';
+    if(res.error){ alert(res.error); return; }
+    openImport(res);
+  };
+  rd.onerror=()=>{ F('importFile').value=''; alert('Could not read that file.'); };
+  rd.readAsText(f);
+};
+F('impAdd').onclick=()=>finishImport('add');
+F('impReplace').onclick=()=>{
+  if(confirm('Replace all '+store.lawns.length+' current lawn'+(store.lawns.length===1?'':'s')+
+             ' and everything logged against them? This cannot be undone.')) finishImport('replace');
+};
+F('impCancel').onclick=closeImport;
+F('impScrim').onclick=closeImport;
+F('themeBtn').onclick=()=>{
+  store.theme = store.theme==='dark'?'light':'dark';
+  applyTheme(store.theme); save();
+  renderSeason();   // the chart is redrawn markup, so repaint it under the new palette
+};
+F('lawnClose').onclick=closeLawnSheet;
+F('lawnScrim').onclick=closeLawnSheet;
+F('l_add').onclick=()=>{
+  const nm=F('l_name').value.trim();
+  if(!nm){ F('l_name').focus(); return; }
+  const l=newLawn(nm);
+  l.settings.area=Math.max(1,parseFloat(F('l_area').value)||200);
+  l.settings.region=F('l_region').value;
+  store.lawns.push(l);
+  closeLawnSheet(); switchLawn(l.id);
+};
+document.addEventListener('keydown',ev=>{
+  if(ev.key!=='Escape') return;
+  if(!F('sheet').hidden) closeSheet();
+  if(!F('lawnSheet').hidden) closeLawnSheet();
+  if(!F('impSheet').hidden) closeImport();
+  if(!F('editSheet').hidden) closeEdit();
+});
+
+/* ============================================================
+   Wiring
+   ============================================================ */
+F('prevMo').onclick=()=>{view.setMonth(view.getMonth()-1);renderCal();};
+F('nextMo').onclick=()=>{view.setMonth(view.getMonth()+1);renderCal();};
+const onSet=()=>{
+  syncCadence();            // show/hide blocks FIRST so the right segments are readable
+  readSettings(); save();
+  renderPlan(); renderCal(); renderDay(); renderSeason(); renderHome(); renderLawnBar();
+};
+['grade','shade','cadence','form','granCad'].forEach(id=>wireSeg(id,onSet));
+F('granShare').addEventListener('input',()=>{ F('shareVal').textContent=F('granShare').value+'%'; onSet(); });
+['area','region','soil','npk','npkLiq','oxide','tank','uptake','sprayVol','clipBox','slowRel','repair2',
+ 'plenProd','plenArea','ironOn','ironPurpose','ironFe','ironInterval']
+  .forEach(id=>F(id).addEventListener('change',onSet));
+
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  ['home','log','plan','season'].forEach(t=>F('p-'+t).hidden=(t!==b.dataset.tab));
+  if(b.dataset.tab==='season') renderSeason();
+  if(b.dataset.tab==='home') renderHome();
+  window.scrollTo({top:0,behavior:'instant'});
+});
+
+F('yrPrev').onclick=()=>{viewYear--; renderSeason();};
+F('yrNext').onclick=()=>{viewYear++; renderSeason();};
+F('exportBtn').onclick=()=>{
+  const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='plenlogg-'+iso(new Date())+'.json'; a.click();
+  URL.revokeObjectURL(a.href);
+};
+F('clearBtn').onclick=()=>{
+  if(confirm('Delete every entry logged against "'+state.name+'"? Its settings stay, and your other lawns are untouched.')){
+    state.entries=[]; save(); refreshPlan(); renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
+  }
+};
+
+/* ============================================================
+   Boot
+   ============================================================ */
+(async()=>{
+  loadStore(await Store.get());
+  writeSettings(); refreshPlan(); renderLawnBar();
+  renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
+})();
+
+/* ---- PWA service worker ----
+   Registered from ./sw.js (a real file on the host) so Android shows the
+   install prompt and the app works offline. Fails silently if unsupported. */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
