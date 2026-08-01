@@ -446,11 +446,6 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
 
   <!-- ============ PLAN ============ -->
   <section class="panel" id="p-plan" hidden>
-    <div class="card sumcard">
-      <div class="sumline"><span id="planSummary">—</span>
-        <button class="btn ghost sm" id="editLawn">Edit</button></div>
-    </div>
-
     <div id="advMismatch" hidden></div>
 
     <div class="card sumcard" id="repairCard">
@@ -474,14 +469,10 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
         <span><i style="background:var(--frost)"></i>Mows/week</span>
       </div>
       <p class="hint">Start at 5–6 °C soil, peak at midsummer, ease off from 1 July as the soil releases its own nitrogen. Last feed about two weeks after the final mow.</p>
-    </div>
-
-<div class="card" id="whereCard">
-      <p class="eyebrow">Where you are</p>
-      <div class="stats" id="seasonStats"></div>
-      <div class="progress"><i id="seasonBar" style="width:0%"></i></div>
       <div id="seasonFlags"></div>
     </div>
+
+    <div id="planExtra"></div>
 
 <div class="card">
       <p class="eyebrow">This year's work</p>
@@ -1937,12 +1928,17 @@ function combiBalHTML(p){
 function sprayHTML(p,s){
   const sp=p.spray;
   if(!sp||p.npk.n<=0) return '';
-  const r=p.rounds.find(x=>x.status==='due')||p.rounds.find(x=>x.status==='upcoming')||sp.ref;
+  /* In combination mode the next round due is often the granular one, which
+     carries no water — look for the next round that is actually sprayed. */
+  const liq=x=>x.method==='liq'&&x.litres>0;
+  const r=p.rounds.find(x=>liq(x)&&x.status==='due')
+        ||p.rounds.find(x=>liq(x)&&x.status==='upcoming')
+        ||p.rounds.find(liq)||sp.ref;
   if(!r||!r.litres) return '';
   const leaf=s.uptake==='leaf';
   const tanks=s.tank>0?r.litres/s.tank:0;
   const when = r.status==='due' ? 'Due this week'
-             : 'Week of '+r.weekStart.toLocaleDateString(undefined,{day:'numeric',month:'long'});
+             : 'Week '+r.week;
   /* Concentration is what stays constant, so each tank gets product in
      proportion to the water it holds — not the total split evenly. */
   const gPerL=r.litres>0?r.gProdTotal/r.litres:0;
@@ -2187,7 +2183,6 @@ function syncAdvUI(){
   show('advOnly',adv);            // iron + Plenrens cards
   show('srcCard',adv);            // the research sourcing
   show('repairCard',adv);         // damage-repair rate
-  show('whereCard',adv);          // nitrogen-denominated season stats
   syncCadence();   // field visibility depends on method and mode together
   // granular-only: hide the other two method buttons
   document.querySelectorAll('#form button').forEach(b=>{
@@ -2276,7 +2271,7 @@ function renderHome(){
       : r.status==='due'
       ? (days<=0?'Due today — last day of the window'
          : 'Due this week · any day up to '+r.date.toLocaleDateString(undefined,{day:'numeric',month:'long'}))
-      : 'In '+days+' days · week of '+r.weekStart.toLocaleDateString(undefined,{day:'numeric',month:'long'});
+      : 'In '+days+' days · week '+r.week;
     const mix = r.litres
       ? '<div class="mix"><span>Water <b>'+vol(r.litres)+'</b></span>'+
         '<span>Rate <b>'+Math.round(r.sprayMl)+' mL/m²</b></span>'+
@@ -2300,7 +2295,7 @@ function renderHome(){
     ironLine='<div class="recon ahead" style="margin-top:9px"><b>Iron</b> — '+
       Math.round(ir.total)+' g of product, '+
       (ir.status==='due'?'due this week'
-        :'week of '+ir.weekStart.toLocaleDateString(undefined,{day:'numeric',month:'long'}))+
+        :'week '+ir.week)+
       '<div class="sub">'+ir.gFeSO4.toFixed(2)+' g FeSO₄/m² · '+ir.purpose.toLowerCase()+
       ' · in '+vol(ir.litres)+' of water</div></div>';
   }
@@ -2366,20 +2361,6 @@ function renderHome(){
   };
 }
 
-function planSummary(p,s){
-  const cad = s.form==='combi'
-    ? s.rounds+' rounds + '+(s.cadence==='weekly'?'weekly':'2-weekly')+' liquid'
-    : {weekly:'weekly',biweekly:'every 2 weeks',rounds:s.rounds+' rounds'}[s.cadence];
-  const bits=['<b>'+s.area+' m²</b>', REGION[s.region].name,
-              {low:'low input',family:'family lawn',high:'high input'}[s.grade],
-              cad, {gran:'granular',liq:'sprayed',combi:'combination'}[s.form]];
-  if(p.npk.n>0){
-    if(s.form==='combi') bits.push('<b>'+esc(s.npk)+'</b> + <b>'+esc(s.npkLiq||s.npk)+'</b>');
-    else bits.push('<b>'+esc(s.form==='liq'?(s.npkLiq||s.npk):s.npk)+'</b>');
-  }
-  if(isLiq(s.form)&&s.sprayVol>0) bits.push(s.sprayVol+' L');
-  return bits.join(' · ');
-}
 
 /* g N/m² back to kilograms of the actual bag, for the simple view. */
 function gnToKg(gN,p,s){
@@ -2456,8 +2437,9 @@ function renderPlan(){
     '<p class="hint">Dissolve and spray at about '+ip.ml+' mL/m² — '+vol(ip.rounds[0].litres)+
       ' per pass here. Iron stains stone, decking and clothing.</p>'+
     ip.flags.map(flagHTML).join('');
-  document.getElementById('planSummary').innerHTML=planSummary(p,s);
   document.getElementById('plenOut').innerHTML=plenrensHTML(p,s,state.entries);
+  /* The plan itself sits above the season curve; the supporting cards follow
+     it, so the chart reads directly against the applications list. */
   document.getElementById('planOut').innerHTML=
   heroHTML(p,s)+
 
@@ -2469,8 +2451,9 @@ function renderPlan(){
       '<p class="hint" style="margin:0 0 6px">Untick any week you will be away — its feed is shared across the others.</p>'+
       '<p class="hint" style="margin:0">Dates are guides. Hold the first until the soil reaches 5–6 °C and growth starts. Spread on dry grass before rain, never in strong sun.</p>'+
     '</div></details>'+
-  '</div>'+
+  '</div>';
 
+  document.getElementById('planExtra').innerHTML=
   sprayHTML(p,s)+
 
   (ADV() ? '<div class="card">'+
@@ -2638,15 +2621,6 @@ function renderSeason(){
   const autN=applied.slice(p.autWk).reduce((a,b)=>a+b,0);
   const mows=yrE.filter(e=>e.type==='mow');
   const lastMow=mows.length?mows.map(e=>e.date).sort().pop():null;
-
-  document.getElementById('seasonStats').innerHTML=
-    '<div class="stat"><div class="k">Nitrogen applied</div><div class="v">'+totN.toFixed(1)+'</div><div class="s">of '+p.target.toFixed(1)+' g N/m² planned</div></div>'+
-    '<div class="stat"><div class="k">Since 1 Sep</div><div class="v">'+autN.toFixed(1)+'</div><div class="s">ceiling '+AUTUMN_CAP+' g N/m²</div></div>'+
-    '<div class="stat"><div class="k">Mows logged</div><div class="v">'+mows.length+'</div><div class="s">'+
-      (lastMow?'last '+parseISO(lastMow).toLocaleDateString(undefined,{day:'numeric',month:'short'}):'none yet')+'</div></div>'+
-    '<div class="stat"><div class="k">Feeds logged</div><div class="v">'+yrE.filter(e=>e.type==='fert').length+
-      '</div><div class="s">of '+p.rounds.length+' planned</div></div>';
-  document.getElementById('seasonBar').style.width=Math.min(100,totN/p.target*100)+'%';
 
   let fl='';
   if(yr!==now){
@@ -2959,7 +2933,6 @@ F('cancelEntry').onclick=closeSheet;
 F('scrim').onclick=closeSheet;
 F('addBtn').onclick=()=>openSheet('mow');
 F('lawnSwitch').onclick=openLawnSheet;
-F('editLawn').onclick=openEdit;
 /* Settings tab commits on change — wire every field to save itself. */
 ['lawnName','area','region','npk','npkLiq','soil','oxide','tank','uptake','sprayVol','plenArea','ironFe']
   .forEach(id=>{ const el=F(id); if(el) el.addEventListener('change',commitSettings); });
