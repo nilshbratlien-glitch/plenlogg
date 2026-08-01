@@ -1455,7 +1455,10 @@ function computePlan(s,entries,yearOpt){
     if(share>0){
       adjusted=true;
       future.forEach(r=>{ r.gN=Math.max(0,r.gNbase+delta*(r.gNbase/share)); });
-      future.forEach(r=>{ if(r.gN>maxDose){ uncorrected+=r.gN-maxDose; r.gN=maxDose; } });
+      future.forEach(r=>{
+        const lim=(r.method==='liq'&&s.uptake==='leaf')?FOLIAR_SPLIT*3:maxDose;
+        if(r.gN>lim){ uncorrected+=r.gN-lim; r.gN=lim; }
+      });
       /* Catch-up can shrink a granular round below the spreadable floor. Merge
          any such round into the nearest remaining granular round rather than
          leaving a handful too small to spread evenly. Liquid can go small. */
@@ -1500,6 +1503,29 @@ function computePlan(s,entries,yearOpt){
     autumnApplied:appliedAutumn,autumnRoom:Math.max(0,autCap-appliedAutumn),
     tracking,
     state:!tracking?'untracked':(Math.abs(delta)<=0.05?'ontrack':(delta>0?'behind':'ahead'))};
+
+  /* Split foliar passes LAST. Away redistribution, the repair boost and
+     reconciliation all raise doses after the plan is first built, so a pass
+     that was leaf-safe at construction can end up well over the ceiling by
+     the time the numbers are final. Splitting here — once nothing else will
+     change a dose — is the only placement that actually holds. */
+  if(s.uptake==='leaf'){
+    const out=[]; let did=0;
+    const offsets=n=>n===2?[0,3]:n===3?[0,2,4]:[0,2,4,6];
+    for(const r of rounds){
+      const live = r.status==='due'||r.status==='upcoming';
+      if(r.method!=='liq'||!live||r.away||r.gN<=FOLIAR_SPLIT){ out.push(r); continue; }
+      const n=Math.ceil(r.gN/FOLIAR_SPLIT), offs=offsets(n);
+      did++;
+      for(let k=0;k<n;k++){
+        const c={...r,gN:r.gN/n,split:{k,n}};
+        c.date=new Date(c.weekStart); c.date.setDate(c.date.getDate()+(offs[k]||0));
+        c.iso=iso(c.date); c.past=c.date<today;
+        out.push(c);
+      }
+    }
+    if(did){ rounds.length=0; rounds.push(...out); rounds.sort((x,y)=>x.date-y.date); }
+  }
 
   // --- product quantities, after every adjustment ---
   const npk=parseNPK(s.npk,s.oxide);
