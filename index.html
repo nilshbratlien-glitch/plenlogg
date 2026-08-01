@@ -56,8 +56,10 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:
 
 header{padding:18px 0 12px;border-bottom:1px solid var(--line);margin-bottom:16px}
 .brand{display:flex;align-items:baseline;gap:9px}
-.themebtn{margin-left:auto;background:var(--card);border:1px solid var(--line);color:var(--ink);
+.themebtn{background:var(--card);border:1px solid var(--line);color:var(--ink);
   width:34px;height:34px;border-radius:9px;font-size:14px;line-height:1;flex:none;align-self:center}
+#aboutBtn{margin-left:auto}
+#themeBtn{margin-left:6px}
 @media (prefers-reduced-motion:no-preference){
   body{transition:background-color .18s ease,color .18s ease}
   .card,.themebtn,.lawnbar{transition:background-color .18s ease,border-color .18s ease}
@@ -408,6 +410,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
 <div class="wrap">
   <header>
     <div class="brand"><h1>Plenlogg</h1><span class="tag">Nordic turf research</span>
+      <button class="themebtn" id="aboutBtn" aria-label="About Plenlogg" title="About Plenlogg">?</button>
       <button class="themebtn" id="themeBtn" aria-label="Toggle dark mode" title="Toggle dark mode">◐</button>
     </div>
     <div class="sub">Log what you do. Get a fertiliser plan built on Nordic turfgrass research.</div>
@@ -648,9 +651,42 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
       </details>
     </div>
 
-<div id="srcCard"><div class="card">
-      <p class="eyebrow">Where the numbers come from</p>
-      <p class="srcs">
+
+  </section>
+</div>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" aria-selected="true" data-tab="home"><span class="ic">◈</span>Home</button>
+  <button role="tab" aria-selected="false" data-tab="log"><span class="ic">▦</span>Log</button>
+  <button role="tab" aria-selected="false" data-tab="plan"><span class="ic">◇</span>Plan</button>
+  <button role="tab" aria-selected="false" data-tab="settings"><span class="ic">⚙</span>Settings</button>
+</nav>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="scrim" id="lawnScrim" hidden></div>
+
+<div class="scrim" id="aboutScrim" hidden></div>
+<div class="sheet" id="aboutSheet" hidden role="dialog" aria-modal="true" aria-label="About Plenlogg">
+  <div class="grab"></div>
+  <h3>About Plenlogg</h3>
+
+  <p class="hint" style="margin-top:0">Plenlogg turns what you know about your lawn into a feeding plan for the season, then keeps that plan honest against what you actually do.</p>
+
+  <p class="eyebrow" style="margin-top:16px">Simple mode</p>
+  <p class="srcs">This is the default, and for most lawns it is all you need. You give it the size of your lawn, roughly how good you want it to look, where in the country you are, and which bag of granular fertiliser you have. It gives you back a handful of dates and, for each one, how much to spread.</p>
+  <p class="srcs" style="margin-top:9px">The plan is not evenly spaced. Grass uses nitrogen fastest around midsummer and barely at all at either end of the season, so the doses follow that shape — light in spring, largest around June and July, tapering off before winter. Feeding hard late is the single easiest way to damage a lawn, so the app holds the autumn total down whatever else you ask of it.</p>
+  <p class="srcs" style="margin-top:9px">Log your feeds and mows as you go. If you feed early, late, or not at all, the remaining dates adjust so the season still lands on target. Skip one deliberately and it redistributes; miss one and it tells you.</p>
+
+  <p class="eyebrow" style="margin-top:16px">Advanced mode</p>
+  <p class="srcs">Turn Advanced on in Settings and everything the model actually tracks becomes visible and editable:</p>
+  <p class="srcs" style="margin-top:9px"><b>Liquid and combination feeding.</b> Spray dissolved fertiliser instead of, or alongside, granular. The app works out water volumes, tank fills and mixing strength, and splits any pass that would exceed what a leaf can absorb at once.</p>
+  <p class="srcs" style="margin-top:9px"><b>Nitrogen in the open.</b> Doses shown in g N/m² rather than kilograms of product, plus the season target, the autumn ceiling, and where you stand against both.</p>
+  <p class="srcs" style="margin-top:9px"><b>Soil, clippings and slow-release.</b> Sandy soil holds less nitrogen; collecting clippings removes what would otherwise return, raising the requirement by roughly a third; controlled-release granular allows fewer, larger rounds.</p>
+  <p class="srcs" style="margin-top:9px"><b>Iron and weed control.</b> An iron programme for colour, moss or nutrition, with the legal line between feeding and moss control marked. A Plenrens calculator with timing guidance.</p>
+  <p class="srcs" style="margin-top:9px"><b>Nutrient balance.</b> Whether your bag actually supplies phosphorus and potassium in the proportions grass takes them up.</p>
+
+  <p class="eyebrow" style="margin-top:16px">Where the numbers come from</p>
+  <p class="srcs">
         Nitrogen rates, the 100 : 14 : 65 N : P : K ratio, species factors and the seasonal curve come from
         <b>Precision Fertilisation — From theory to practice (STERF, 2021 update)</b> by Ericsson, Blombäck and
         Kvalbein, revised by Hesselsøe, Aamlid and Borchert at NIBIO Landvik. The curve is calibrated so a
@@ -669,19 +705,14 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
         evenly. STERF makes the equipment point but does not publish that number.
       </p>
       <p class="srcs" style="margin-top:9px"><a href="https://sterf.org" target="_blank" rel="noopener">sterf.org</a></p>
-    </div></div>
-  </section>
+    
+
+  <p class="srcs" style="margin-top:14px">Your data stays on your device. Turn on backup in Settings to keep a copy off it and share one log across two devices.</p>
+  <p class="hint" style="margin-top:14px">Plenlogg gives guidance, not a guarantee. Follow the label on any product you apply — it takes precedence over anything here.</p>
+
+  <button class="btn" id="aboutDone" style="margin-top:16px">Close</button>
 </div>
 
-<nav class="tabs" role="tablist">
-  <button role="tab" aria-selected="true" data-tab="home"><span class="ic">◈</span>Home</button>
-  <button role="tab" aria-selected="false" data-tab="log"><span class="ic">▦</span>Log</button>
-  <button role="tab" aria-selected="false" data-tab="plan"><span class="ic">◇</span>Plan</button>
-  <button role="tab" aria-selected="false" data-tab="settings"><span class="ic">⚙</span>Settings</button>
-</nav>
-
-<div class="scrim" id="scrim" hidden></div>
-<div class="scrim" id="lawnScrim" hidden></div>
 <div class="scrim" id="impScrim" hidden></div>
 <div class="sheet" id="impSheet" hidden role="dialog" aria-modal="true" aria-label="Import backup">
   <div class="grab"></div>
@@ -2181,7 +2212,6 @@ function syncAdvUI(){
   const adv=ADV(), s=state.settings;
   const show=(id,on)=>{ const el=F(id); if(el) el.hidden=!on; };
   show('advOnly',adv);            // iron + Plenrens cards
-  show('srcCard',adv);            // the research sourcing
   show('repairCard',adv);         // damage-repair rate
   syncCadence();   // field visibility depends on method and mode together
   // granular-only: hide the other two method buttons
@@ -2970,6 +3000,12 @@ F('impReplace').onclick=()=>{
 };
 F('impCancel').onclick=closeImport;
 F('impScrim').onclick=closeImport;
+function openAbout(){ F('aboutScrim').hidden=false; F('aboutSheet').hidden=false; }
+function closeAbout(){ F('aboutScrim').hidden=true;  F('aboutSheet').hidden=true;  }
+F('aboutBtn').onclick=openAbout;
+F('aboutDone').onclick=closeAbout;
+F('aboutScrim').onclick=closeAbout;
+
 F('themeBtn').onclick=()=>{
   store.theme = store.theme==='dark'?'light':'dark';
   applyTheme(store.theme); save();
@@ -2988,6 +3024,7 @@ F('l_add').onclick=()=>{
 };
 document.addEventListener('keydown',ev=>{
   if(ev.key!=='Escape') return;
+  if(!F('aboutSheet').hidden) closeAbout();
   if(!F('sheet').hidden) closeSheet();
   if(!F('lawnSheet').hidden) closeLawnSheet();
   if(!F('impSheet').hidden) closeImport();
