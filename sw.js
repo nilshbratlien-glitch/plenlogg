@@ -1,6 +1,6 @@
-/* Plenlogg service worker — offline shell + installability.
+/* Turfkeep service worker — offline shell + installability.
    Bump CACHE when you deploy a new version of the app. */
-const CACHE = 'plenlogg-v2';
+const CACHE = 'turfkeep-v3';
 const SHELL = ['./', './index.html', './icon-192.png', './icon-512.png', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {

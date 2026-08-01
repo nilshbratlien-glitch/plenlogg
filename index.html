@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Plenlogg">
+<meta name="apple-mobile-web-app-title" content="Turfkeep">
 <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" type="image/png" href="./icon-192.png">
@@ -409,8 +409,8 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
 
 <div class="wrap">
   <header>
-    <div class="brand"><h1>Plenlogg</h1><span class="tag">Nordic turf research</span>
-      <button class="themebtn" id="aboutBtn" aria-label="About Plenlogg" title="About Plenlogg">?</button>
+    <div class="brand"><h1>Turfkeep</h1><span class="tag">Nordic turf research</span>
+      <button class="themebtn" id="aboutBtn" aria-label="About Turfkeep" title="About Turfkeep">?</button>
       <button class="themebtn" id="themeBtn" aria-label="Toggle dark mode" title="Toggle dark mode">◐</button>
     </div>
     <div class="sub">Log what you do. Get a fertiliser plan built on Nordic turfgrass research.</div>
@@ -666,11 +666,11 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
 <div class="scrim" id="lawnScrim" hidden></div>
 
 <div class="scrim" id="aboutScrim" hidden></div>
-<div class="sheet" id="aboutSheet" hidden role="dialog" aria-modal="true" aria-label="About Plenlogg">
+<div class="sheet" id="aboutSheet" hidden role="dialog" aria-modal="true" aria-label="About Turfkeep">
   <div class="grab"></div>
-  <h3>About Plenlogg</h3>
+  <h3>About Turfkeep</h3>
 
-  <p class="hint" style="margin-top:0">Plenlogg turns what you know about your lawn into a feeding plan for the season, then keeps that plan honest against what you actually do.</p>
+  <p class="hint" style="margin-top:0">Turfkeep turns what you know about your lawn into a feeding plan for the season, then keeps that plan honest against what you actually do.</p>
 
   <p class="eyebrow" style="margin-top:16px">Simple mode</p>
   <p class="srcs">This is the default, and for most lawns it is all you need. You give it the size of your lawn, roughly how good you want it to look, where in the country you are, and which bag of granular fertiliser you have. It gives you back a handful of dates and, for each one, how much to spread.</p>
@@ -708,9 +708,11 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
     
 
   <p class="srcs" style="margin-top:14px">Your data stays on your device. Turn on backup in Settings to keep a copy off it and share one log across two devices.</p>
-  <p class="hint" style="margin-top:14px">Plenlogg gives guidance, not a guarantee. Follow the label on any product you apply — it takes precedence over anything here.</p>
+  <p class="hint" style="margin-top:14px">Turfkeep gives guidance, not a guarantee. Follow the label on any product you apply — it takes precedence over anything here.</p>
 
-  <button class="btn" id="aboutDone" style="margin-top:16px">Close</button>
+  <p class="srcs" style="margin-top:14px;text-align:center">Turfkeep <span id="aboutVer">—</span></p>
+
+  <button class="btn" id="aboutDone" style="margin-top:12px">Close</button>
 </div>
 
 <div class="scrim" id="impScrim" hidden></div>
@@ -776,6 +778,8 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
 /* ============================================================
    Storage — Claude artifact storage, then localStorage, then memory.
    ============================================================ */
+/* Storage keys keep the original name deliberately: renaming them would
+   orphan every existing install's data. The name is a display concern. */
 const KEY='plenlogg:v3', LEGACY='plenlogg:v2';
 const mem={};
 /* ============================================================
@@ -792,6 +796,10 @@ const mem={};
    document — because a single person logging lawn work rarely edits two
    devices at once, and a visible "last synced" beats hidden cleverness.
    ============================================================ */
+/* Bump on release. Rendered in About; keep in step with the git tag. */
+const VERSION='1.2';
+
+/* Likewise — changing this would unpair every device already backed up. */
 const SYNC_KEY='plenlogg.sync';
 const Sync={
   cfg(){ try{return JSON.parse(localStorage.getItem(SYNC_KEY))||{};}catch(e){return {};} },
@@ -2835,7 +2843,7 @@ let pendingImport=null;
 
 function parseBackup(txt){
   let d; try{ d=JSON.parse(txt); }catch(e){ return {error:'That file is not valid JSON.'}; }
-  if(!d||typeof d!=='object') return {error:'That file does not look like a Plenlogg backup.'};
+  if(!d||typeof d!=='object') return {error:'That file does not look like a Turfkeep backup.'};
   let lawns=null;
   if(Array.isArray(d.lawns)) lawns=d.lawns;
   else if(d.settings&&typeof d.settings==='object') lawns=[{name:'Imported lawn',settings:d.settings,entries:d.entries||[]}];
@@ -3002,6 +3010,7 @@ F('impCancel').onclick=closeImport;
 F('impScrim').onclick=closeImport;
 function openAbout(){ F('aboutScrim').hidden=false; F('aboutSheet').hidden=false; }
 function closeAbout(){ F('aboutScrim').hidden=true;  F('aboutSheet').hidden=true;  }
+F('aboutVer').textContent='v'+VERSION;
 F('aboutBtn').onclick=openAbout;
 F('aboutDone').onclick=closeAbout;
 F('aboutScrim').onclick=closeAbout;
@@ -3127,7 +3136,7 @@ wireSync();
 F('exportBtn').onclick=()=>{
   const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download='plenlogg-'+iso(new Date())+'.json'; a.click();
+  a.href=URL.createObjectURL(blob); a.download='turfkeep-'+iso(new Date())+'.json'; a.click();
   URL.revokeObjectURL(a.href);
 };
 F('clearBtn').onclick=()=>{
