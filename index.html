@@ -56,8 +56,10 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:
 
 header{padding:18px 0 12px;border-bottom:1px solid var(--line);margin-bottom:16px}
 .brand{display:flex;align-items:baseline;gap:9px}
-.themebtn{margin-left:auto;background:var(--card);border:1px solid var(--line);color:var(--ink);
+.themebtn{background:var(--card);border:1px solid var(--line);color:var(--ink);
   width:34px;height:34px;border-radius:9px;font-size:14px;line-height:1;flex:none;align-self:center}
+#aboutBtn{margin-left:auto}
+#themeBtn{margin-left:6px}
 @media (prefers-reduced-motion:no-preference){
   body{transition:background-color .18s ease,color .18s ease}
   .card,.themebtn,.lawnbar{transition:background-color .18s ease,border-color .18s ease}
@@ -93,6 +95,11 @@ select,input[type=text],input,textarea{width:100%;font-family:var(--sans);font-s
 input[inputmode],.num{font-family:var(--mono)}
 input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;width:auto;margin:0;accent-color:var(--chloro)}
 .check{display:flex;align-items:flex-start;gap:9px}
+/* Author display rules (.check{display:flex}, .grid2{display:grid} …) outrank
+   the browser's default [hidden]{display:none}, so anything hidden via the
+   attribute stays visible unless we say otherwise. One rule for the whole app
+   rather than a per-class patch each time a new element gets hidden. */
+[hidden]{display:none !important}
 .check label{margin:0;font-weight:400;font-size:13px;line-height:1.4}
 .seg{display:flex;gap:3px;background:var(--line-soft);border-radius:9px;padding:3px}
 .seg button{flex:1;border:none;background:none;color:var(--muted);font-family:var(--sans);
@@ -158,14 +165,17 @@ input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;width:auto;marg
 .btn.sm{width:auto;padding:7px 13px;font-size:13px;flex:none}
 .setgrp{border-top:1px solid var(--line-soft);margin-top:14px;padding-top:12px}
 .setgrp .eyebrow{margin-bottom:10px}
-#editSheet .field:last-of-type{margin-bottom:0}
+#p-settings .card .field:last-of-type{margin-bottom:0}
 
 /* home */
 .next{border:1px solid var(--ok-line);background:var(--chloro-soft);border-radius:10px;padding:13px}
 .next .when{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--chloro)}
 .next.overdue{border-color:var(--soil);background:var(--soil-soft)}
 .next.overdue .when{color:var(--warn-ink)}
-.nextbtns{display:flex;gap:8px;margin-top:2px}
+.nextbtns{display:flex;gap:8px;margin-top:2px;flex-wrap:wrap}
+.warnCard{border-color:var(--soil);background:var(--soil-soft)}
+.warnCard b{display:block;margin-bottom:2px}
+.btn.arm{background:var(--soil);color:#fff;border-color:var(--soil)}
 .synced{font-family:var(--mono);font-size:10.5px;color:var(--muted);text-align:center;margin:10px 0 0}
 .synccode{font-family:var(--mono);font-size:20px;letter-spacing:.18em;font-weight:600;color:var(--ink);
   background:var(--chloro-soft);border:1px solid var(--line-soft);border-radius:10px;padding:12px;text-align:center;user-select:all}
@@ -400,6 +410,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
 <div class="wrap">
   <header>
     <div class="brand"><h1>Plenlogg</h1><span class="tag">Nordic turf research</span>
+      <button class="themebtn" id="aboutBtn" aria-label="About Plenlogg" title="About Plenlogg">?</button>
       <button class="themebtn" id="themeBtn" aria-label="Toggle dark mode" title="Toggle dark mode">◐</button>
     </div>
     <div class="sub">Log what you do. Get a fertiliser plan built on Nordic turfgrass research.</div>
@@ -438,17 +449,40 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
 
   <!-- ============ PLAN ============ -->
   <section class="panel" id="p-plan" hidden>
-    <div class="card sumcard">
-      <div class="sumline"><span id="planSummary">—</span>
-        <button class="btn ghost sm" id="editLawn">Edit</button></div>
-    </div>
+    <div id="advMismatch" hidden></div>
 
-    <div class="card sumcard">
+    <div class="card sumcard" id="repairCard">
       <div class="check"><input type="checkbox" id="repair2"><label for="repair2">Recovering from damage — feed 60% harder for six weeks</label></div>
     </div>
 
     <div id="planOut"></div>
 
+<div class="card">
+      <p class="eyebrow row">Season curve
+        <span class="yearnav">
+          <button id="yrPrev" aria-label="Previous season">‹</button>
+          <b id="seasonYear">—</b>
+          <button id="yrNext" aria-label="Next season">›</button>
+        </span>
+      </p>
+      <div class="chartwrap"><svg class="chart" id="chart" viewBox="0 0 340 210" role="img" aria-label="Planned nitrogen through the season against what you applied"></svg></div>
+      <div class="legend">
+        <span><i style="background:var(--chloro-soft);outline:1px solid var(--chloro)"></i>Planned N</span>
+        <span><i class="dot" style="background:var(--soil)"></i>You applied</span>
+        <span><i style="background:var(--frost)"></i>Mows/week</span>
+      </div>
+      <p class="hint">Start at 5–6 °C soil, peak at midsummer, ease off from 1 July as the soil releases its own nitrogen. Last feed about two weeks after the final mow.</p>
+      <div id="seasonFlags"></div>
+    </div>
+
+    <div id="planExtra"></div>
+
+<div class="card">
+      <p class="eyebrow">This year's work</p>
+      <div id="seasonCounts"></div>
+    </div>
+
+    <div id="advOnly">
 <div class="card">
       <p class="eyebrow">Iron</p>
       <div class="check"><input type="checkbox" id="ironOn"><label for="ironOn">Include iron in the plan</label></div>
@@ -488,115 +522,14 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
     </div>
 
     <div id="plenOut"></div>
-
-      </section>
-
-  <!-- ============ SEASON ============ -->
-  <section class="panel" id="p-season" hidden>
-    <div class="card">
-      <p class="eyebrow row">Season curve
-        <span class="yearnav">
-          <button id="yrPrev" aria-label="Previous season">‹</button>
-          <b id="seasonYear">—</b>
-          <button id="yrNext" aria-label="Next season">›</button>
-        </span>
-      </p>
-      <div class="chartwrap"><svg class="chart" id="chart" viewBox="0 0 340 210" role="img" aria-label="Planned nitrogen through the season against what you applied"></svg></div>
-      <div class="legend">
-        <span><i style="background:var(--chloro-soft);outline:1px solid var(--chloro)"></i>Planned N</span>
-        <span><i class="dot" style="background:var(--soil)"></i>You applied</span>
-        <span><i style="background:var(--frost)"></i>Mows/week</span>
-      </div>
-      <p class="hint">Start at 5–6 °C soil, peak at midsummer, ease off from 1 July as the soil releases its own nitrogen. Last feed about two weeks after the final mow.</p>
-    </div>
-
-    <div class="card">
-      <p class="eyebrow">Where you are</p>
-      <div class="stats" id="seasonStats"></div>
-      <div class="progress"><i id="seasonBar" style="width:0%"></i></div>
-      <div id="seasonFlags"></div>
-    </div>
-
-    <div class="card">
-      <p class="eyebrow">This year's work</p>
-      <div id="seasonCounts"></div>
-    </div>
-
-    <div class="card">
-      <p class="eyebrow">Where the numbers come from</p>
-      <p class="srcs">
-        Nitrogen rates, the 100 : 14 : 65 N : P : K ratio, species factors and the seasonal curve come from
-        <b>Precision Fertilisation — From theory to practice (STERF, 2021 update)</b> by Ericsson, Blombäck and
-        Kvalbein, revised by Hesselsøe, Aamlid and Borchert at NIBIO Landvik. The curve is calibrated so a
-        maximum-input southern lawn reproduces their three published rates: a 0.30 g N/m² starting dose,
-        a 0.75 peak, and 0.40 on 1 September.
-      </p>
-      <p class="srcs" style="margin-top:9px">
-        The autumn ceiling comes from STERF's autumn fertilisation trials. Beyond about 2.8 g N/m² after
-        1 September, nitrogen leaching climbed toward half of what was applied, creeping bentgrass lost roughly
-        10 °C of freezing tolerance, and snow mould increased four to five fold.
-      </p>
-      <p class="srcs" style="margin-top:9px">
-        <b>Two things that are mine, not STERF's:</b> their figures are for golf greens, so this app scales them
-        down for a garden lawn — higher cut, clippings usually left. And the spreader warning uses a practical
-        floor of about 5 g of product per m², below which most consumer broadcast spreaders cannot distribute
-        evenly. STERF makes the equipment point but does not publish that number.
-      </p>
-      <p class="srcs" style="margin-top:9px"><a href="https://sterf.org" target="_blank" rel="noopener">sterf.org</a></p>
-    </div>
-
-    <div class="card">
-      <p class="eyebrow">Data</p>
-      <button class="btn ghost" id="exportBtn">Export everything as JSON</button>
-      <button class="btn ghost" id="importBtn" style="margin-top:8px">Import from a backup</button>
-      <input type="file" id="importFile" accept="application/json,.json" hidden>
-      <p class="hint">Export regularly. Clearing your browser data erases everything stored here.</p>
-      <button class="btn danger" id="clearBtn" style="margin-top:8px">Delete all entries</button>
-    </div>
-
-    <div class="card">
-      <p class="eyebrow">Backup &amp; sync</p>
-      <div id="syncOff">
-        <p class="hint" style="margin-top:0">Keep a copy off this device, so a lost or wiped phone does not take your log with it. Turn it on here, then enter the same code on your other device.</p>
-        <button class="btn" id="syncStart">Turn on backup</button>
-      </div>
-      <div id="syncOn" hidden>
-        <p class="hint" style="margin-top:0">Your code — enter this on any other device to share the same log.</p>
-        <div class="synccode" id="syncCode"></div>
-        <div class="nextbtns" style="margin-top:10px">
-          <button class="btn sm ghost" id="syncCopy">Copy code</button>
-          <button class="btn sm ghost" id="syncNow">Sync now</button>
-        </div>
-        <p class="hint" id="syncState"></p>
-        <button class="btn ghost" id="syncOffBtn" style="margin-top:8px">Turn off backup</button>
-      </div>
-      <details style="margin-top:10px"><summary>Use a code from another device</summary>
-        <div class="field" style="margin-top:8px">
-          <label for="syncJoin">Code from your other device</label>
-          <input id="syncJoin" placeholder="XXXXXXXX" autocapitalize="characters" spellcheck="false">
-        </div>
-        <button class="btn sm" id="syncJoinBtn">Link this device</button>
-        <p class="hint">This device will take on that log, replacing what is stored here now. Export first if you have anything you want to keep.</p>
-      </details>
     </div>
   </section>
-</div>
 
-<nav class="tabs" role="tablist">
-  <button role="tab" aria-selected="true" data-tab="home"><span class="ic">◈</span>Home</button>
-  <button role="tab" aria-selected="false" data-tab="log"><span class="ic">▦</span>Log</button>
-  <button role="tab" aria-selected="false" data-tab="plan"><span class="ic">◇</span>Plan</button>
-  <button role="tab" aria-selected="false" data-tab="season"><span class="ic">◠</span>Season</button>
-</nav>
-
-<div class="scrim" id="scrim" hidden></div>
-<div class="scrim" id="lawnScrim" hidden></div>
-<div class="scrim" id="editScrim" hidden></div>
-<div class="sheet" id="editSheet" hidden role="dialog" aria-modal="true" aria-label="Edit lawn">
-  <div class="grab"></div>
-  <h3 id="editTitle">Edit lawn</h3>
-  <div class="d">Set once, then forget. Everything here shapes the plan.</div>
-  <div class="grid2">
+  <!-- ============ SETTINGS ============ -->
+  <section class="panel" id="p-settings" hidden>
+    <div class="card">
+      <p class="eyebrow">This lawn</p>
+<div class="grid2">
     <div class="field"><label for="lawnName">Name</label><input id="lawnName"></div>
     <div class="field"><label for="area">Area (m²)</label><input id="area" inputmode="decimal" value="200"></div>
   </div>
@@ -620,7 +553,10 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
       </div></div>
   </div>
 
-  <div class="check" style="margin-bottom:14px"><input type="checkbox" id="clipBox"><label for="clipBox">I collect the clippings</label></div>
+  <div class="field" id="soilField"><label for="soil">Soil</label>
+    <select id="soil"><option value="sand">Sandy</option><option value="loam" selected>Loam</option><option value="rich">Old / organic</option></select></div>
+
+  <div class="check" id="clipField" style="margin-bottom:14px"><input type="checkbox" id="clipBox"><label for="clipBox">I collect the clippings</label></div>
 
   <div class="field"><label>Applied as</label>
     <div class="seg" id="form" data-cur="gran">
@@ -636,6 +572,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
         </div></div>
       <div class="field"><label for="npk" id="npkLabel">Fertiliser</label><input id="npk" value="14-3-15"></div>
     </div>
+    <div class="check" id="slowField" style="margin-bottom:14px"><input type="checkbox" id="slowRel"><label for="slowRel">Slow / controlled-release granular — allows bigger, fewer rounds</label></div>
   </div>
 
   <div id="liqBlock" hidden>
@@ -660,21 +597,122 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
     <div class="hint" id="volEcho" style="margin-top:4px"></div>
   </div>
 
-  <details class="disc"><summary>Advanced</summary><div class="body">
-    <div class="field"><label for="soil">Soil</label>
-      <select id="soil"><option value="sand">Sandy</option><option value="loam" selected>Loam</option><option value="rich">Old / organic</option></select></div>
-    <div class="grid2" id="sprayFields" hidden>
-      <div class="field"><label for="uptake">Aiming for</label>
-        <select id="uptake"><option value="leaf">Leaf uptake</option><option value="soil">Soil uptake</option></select></div>
-      <div class="field"><label for="tank">Sprayer tank (L)</label><input id="tank" inputmode="decimal" value="15"></div>
-    </div>
-    <div class="field"><label for="oxide">N-P-K label style</label>
-      <select id="oxide"><option value="elem">Elemental P and K</option><option value="ox">P₂O₅ and K₂O</option></select></div>
-    <div class="check" id="slowField" style="margin-top:12px"><input type="checkbox" id="slowRel"><label for="slowRel">Slow / controlled-release granular — allows bigger, fewer rounds</label></div>
-  </div></details>
+  <div class="grid2" id="sprayFields" hidden>
+    <div class="field"><label for="uptake">Aiming for</label>
+      <select id="uptake"><option value="leaf">Leaf uptake</option><option value="soil">Soil uptake</option></select></div>
+    <div class="field"><label for="tank">Sprayer tank (L)</label><input id="tank" inputmode="decimal" value="15"></div>
+  </div>
 
-  <button class="btn" id="editDone" style="margin-top:12px">Done</button>
+  <div class="field" id="oxideField"><label for="oxide">N-P-K label style</label>
+    <select id="oxide"><option value="elem">Elemental P and K</option><option value="ox">P₂O₅ and K₂O</option></select></div>
+
+
+
+      </div>
+
+    <div class="card">
+      <p class="eyebrow">Detail level</p>
+      <div class="check"><input type="checkbox" id="advMode"><label for="advMode">Advanced</label></div>
+      <p class="hint" id="advHint"></p>
+    </div>
+
+<div class="card">
+      <p class="eyebrow">Data</p>
+      <button class="btn ghost" id="exportBtn">Export everything as JSON</button>
+      <button class="btn ghost" id="importBtn" style="margin-top:8px">Import from a backup</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <p class="hint">Export regularly. Clearing your browser data erases everything stored here.</p>
+      <button class="btn danger" id="clearBtn" style="margin-top:8px">Delete all entries</button>
+    </div>
+
+<div class="card">
+      <p class="eyebrow">Backup &amp; sync</p>
+      <div id="syncOff">
+        <p class="hint" style="margin-top:0">Keep a copy off this device, so a lost or wiped phone does not take your log with it. Turn it on here, then enter the same code on your other device.</p>
+        <button class="btn" id="syncStart">Turn on backup</button>
+      </div>
+      <div id="syncOn" hidden>
+        <p class="hint" style="margin-top:0">Your code — enter this on any other device to share the same log.</p>
+        <div class="synccode" id="syncCode"></div>
+        <div class="nextbtns" style="margin-top:10px">
+          <button class="btn sm ghost" id="syncCopy">Copy code</button>
+          <button class="btn sm ghost" id="syncNow">Sync now</button>
+        </div>
+        <p class="hint" id="syncState"></p>
+        <button class="btn ghost" id="syncOffBtn" style="margin-top:8px">Turn off backup</button>
+      </div>
+      <details style="margin-top:10px"><summary>Use a code from another device</summary>
+        <div class="field" style="margin-top:8px">
+          <label for="syncJoin">Code from your other device</label>
+          <input id="syncJoin" placeholder="XXXXXXXX" autocapitalize="characters" spellcheck="false">
+        </div>
+        <button class="btn sm" id="syncJoinBtn">Link this device</button>
+        <p class="hint">This device will take on that log, replacing what is stored here now. Export first if you have anything you want to keep.</p>
+      </details>
+    </div>
+
+
+  </section>
 </div>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" aria-selected="true" data-tab="home"><span class="ic">◈</span>Home</button>
+  <button role="tab" aria-selected="false" data-tab="log"><span class="ic">▦</span>Log</button>
+  <button role="tab" aria-selected="false" data-tab="plan"><span class="ic">◇</span>Plan</button>
+  <button role="tab" aria-selected="false" data-tab="settings"><span class="ic">⚙</span>Settings</button>
+</nav>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="scrim" id="lawnScrim" hidden></div>
+
+<div class="scrim" id="aboutScrim" hidden></div>
+<div class="sheet" id="aboutSheet" hidden role="dialog" aria-modal="true" aria-label="About Plenlogg">
+  <div class="grab"></div>
+  <h3>About Plenlogg</h3>
+
+  <p class="hint" style="margin-top:0">Plenlogg turns what you know about your lawn into a feeding plan for the season, then keeps that plan honest against what you actually do.</p>
+
+  <p class="eyebrow" style="margin-top:16px">Simple mode</p>
+  <p class="srcs">This is the default, and for most lawns it is all you need. You give it the size of your lawn, roughly how good you want it to look, where in the country you are, and which bag of granular fertiliser you have. It gives you back a handful of dates and, for each one, how much to spread.</p>
+  <p class="srcs" style="margin-top:9px">The plan is not evenly spaced. Grass uses nitrogen fastest around midsummer and barely at all at either end of the season, so the doses follow that shape — light in spring, largest around June and July, tapering off before winter. Feeding hard late is the single easiest way to damage a lawn, so the app holds the autumn total down whatever else you ask of it.</p>
+  <p class="srcs" style="margin-top:9px">Log your feeds and mows as you go. If you feed early, late, or not at all, the remaining dates adjust so the season still lands on target. Skip one deliberately and it redistributes; miss one and it tells you.</p>
+
+  <p class="eyebrow" style="margin-top:16px">Advanced mode</p>
+  <p class="srcs">Turn Advanced on in Settings and everything the model actually tracks becomes visible and editable:</p>
+  <p class="srcs" style="margin-top:9px"><b>Liquid and combination feeding.</b> Spray dissolved fertiliser instead of, or alongside, granular. The app works out water volumes, tank fills and mixing strength, and splits any pass that would exceed what a leaf can absorb at once.</p>
+  <p class="srcs" style="margin-top:9px"><b>Nitrogen in the open.</b> Doses shown in g N/m² rather than kilograms of product, plus the season target, the autumn ceiling, and where you stand against both.</p>
+  <p class="srcs" style="margin-top:9px"><b>Soil, clippings and slow-release.</b> Sandy soil holds less nitrogen; collecting clippings removes what would otherwise return, raising the requirement by roughly a third; controlled-release granular allows fewer, larger rounds.</p>
+  <p class="srcs" style="margin-top:9px"><b>Iron and weed control.</b> An iron programme for colour, moss or nutrition, with the legal line between feeding and moss control marked. A Plenrens calculator with timing guidance.</p>
+  <p class="srcs" style="margin-top:9px"><b>Nutrient balance.</b> Whether your bag actually supplies phosphorus and potassium in the proportions grass takes them up.</p>
+
+  <p class="eyebrow" style="margin-top:16px">Where the numbers come from</p>
+  <p class="srcs">
+        Nitrogen rates, the 100 : 14 : 65 N : P : K ratio, species factors and the seasonal curve come from
+        <b>Precision Fertilisation — From theory to practice (STERF, 2021 update)</b> by Ericsson, Blombäck and
+        Kvalbein, revised by Hesselsøe, Aamlid and Borchert at NIBIO Landvik. The curve is calibrated so a
+        maximum-input southern lawn reproduces their three published rates: a 0.30 g N/m² starting dose,
+        a 0.75 peak, and 0.40 on 1 September.
+      </p>
+      <p class="srcs" style="margin-top:9px">
+        The autumn ceiling comes from STERF's autumn fertilisation trials. Beyond about 2.8 g N/m² after
+        1 September, nitrogen leaching climbed toward half of what was applied, creeping bentgrass lost roughly
+        10 °C of freezing tolerance, and snow mould increased four to five fold.
+      </p>
+      <p class="srcs" style="margin-top:9px">
+        <b>Two things that are mine, not STERF's:</b> their figures are for golf greens, so this app scales them
+        down for a garden lawn — higher cut, clippings usually left. And the spreader warning uses a practical
+        floor of about 5 g of product per m², below which most consumer broadcast spreaders cannot distribute
+        evenly. STERF makes the equipment point but does not publish that number.
+      </p>
+      <p class="srcs" style="margin-top:9px"><a href="https://sterf.org" target="_blank" rel="noopener">sterf.org</a></p>
+    
+
+  <p class="srcs" style="margin-top:14px">Your data stays on your device. Turn on backup in Settings to keep a copy off it and share one log across two devices.</p>
+  <p class="hint" style="margin-top:14px">Plenlogg gives guidance, not a guarantee. Follow the label on any product you apply — it takes precedence over anything here.</p>
+
+  <button class="btn" id="aboutDone" style="margin-top:16px">Close</button>
+</div>
+
 <div class="scrim" id="impScrim" hidden></div>
 <div class="sheet" id="impSheet" hidden role="dialog" aria-modal="true" aria-label="Import backup">
   <div class="grab"></div>
@@ -844,7 +882,7 @@ const TYPES=[
 const T=id=>TYPES.find(t=>t.id===id)||TYPES[9];
 
 const DEFAULTS={area:200,region:'south',clip:'mulch',
-  shade:'sun',grade:'family',soil:'loam',cadence:'biweekly',npkLiq:'15-0-0',granShare:50,rounds:4,form:'gran',slowRel:false,npk:'14-3-15',oxide:'elem',repair:false,uptake:'leaf',tank:15,plenProd:'kons',plenArea:0,away:[],skips:[],sprayVol:0,
+  shade:'sun',grade:'family',soil:'loam',cadence:'biweekly',npkLiq:'15-0-0',granShare:50,rounds:4,form:'gran',slowRel:false,npk:'14-3-15',oxide:'elem',repair:false,uptake:'leaf',tank:15,plenProd:'kons',plenArea:0,away:[],skips:[],sprayVol:0,adv:false,
   ironOn:false,ironPurpose:'colour',ironFe:20.1,ironInterval:3};
 
 const uid=()=>Math.random().toString(36).slice(2,9);
@@ -1921,12 +1959,17 @@ function combiBalHTML(p){
 function sprayHTML(p,s){
   const sp=p.spray;
   if(!sp||p.npk.n<=0) return '';
-  const r=p.rounds.find(x=>x.status==='due')||p.rounds.find(x=>x.status==='upcoming')||sp.ref;
+  /* In combination mode the next round due is often the granular one, which
+     carries no water — look for the next round that is actually sprayed. */
+  const liq=x=>x.method==='liq'&&x.litres>0;
+  const r=p.rounds.find(x=>liq(x)&&x.status==='due')
+        ||p.rounds.find(x=>liq(x)&&x.status==='upcoming')
+        ||p.rounds.find(liq)||sp.ref;
   if(!r||!r.litres) return '';
   const leaf=s.uptake==='leaf';
   const tanks=s.tank>0?r.litres/s.tank:0;
   const when = r.status==='due' ? 'Due this week'
-             : 'Week of '+r.weekStart.toLocaleDateString(undefined,{day:'numeric',month:'long'});
+             : 'Week '+r.week;
   /* Concentration is what stays constant, so each tank gets product in
      proportion to the water it holds — not the total split evenly. */
   const gPerL=r.litres>0?r.gProdTotal/r.litres:0;
@@ -2064,7 +2107,8 @@ function appRow(r,p,s){
     : (p.npk.n>0?mass(r.kg):'—');
   const sub = r.status==='done'
     ? (r.doneDate?parseISO(r.doneDate).toLocaleDateString(undefined,{day:'numeric',month:'short'}):'')
-    : r.gN.toFixed(2)+' g N/m²'+(r.litres?' · '+vol(r.litres):'');
+    : (ADV() ? r.gN.toFixed(2)+' g N/m²'+(r.litres?' · '+vol(r.litres):'')
+             : (r.litres?vol(r.litres)+' of water':''));
   return '<div class="app s-'+r.status+(s.form==='combi'?' m-'+r.method:'')+'">'+
     (r.status==='due'||r.status==='upcoming'||r.status==='away'
       ? '<input type="checkbox" class="box" data-wk="'+r.week+'"'+(r.away?'':' checked')+
@@ -2126,6 +2170,104 @@ function roundsHTML(p,s){
   }).join('');
 }
 
+/* ---- detail level ----
+   Simple mode is a smaller product, not a hidden one: no iron, no herbicide
+   calculator, granular only, and the plan speaks in kilograms of product
+   rather than g N/m². Turning it off never rewrites a lawn's configuration —
+   if the existing setup needs the advanced features, we say so and offer both
+   a conversion and an undo. */
+/* Installed PWAs and in-app webviews often suppress native JS dialogs:
+   confirm() then returns false without ever showing anything, so a guarded
+   action looks broken. Probe once, and if dialogs are dead, let explicitly
+   tapped actions through rather than silently swallowing them. */
+let DIALOGS=null;
+function canDialog(){
+  if(DIALOGS===null){
+    try{ DIALOGS = (typeof window.confirm==='function') && window.confirm.toString().indexOf('[native code]')>=0; }
+    catch(e){ DIALOGS=false; }
+  }
+  return DIALOGS;
+}
+function ask(msg){
+  if(!canDialog()) return true;      // no dialog available — trust the tap
+  try{ return !!window.confirm(msg); }catch(e){ return true; }
+}
+
+function ADV(){ return !!(state&&state.settings&&state.settings.adv); }
+
+function advNeeds(s){
+  const why=[];
+  if(s.form==='liq')   why.push('liquid feeding');
+  if(s.form==='combi') why.push('combination feeding');
+  if(s.ironOn)         why.push('iron');
+  if(s.slowRel)        why.push('slow-release');
+  /* Collecting clippings lifts the nitrogen requirement by about a third.
+     Simple mode hides that control, so left set it would drive the plan
+     invisibly — name it here rather than let it work in the dark. */
+  if(s.clip==='remove') why.push('collected clippings');
+  return why;
+}
+
+function syncAdvUI(){
+  const adv=ADV(), s=state.settings;
+  const show=(id,on)=>{ const el=F(id); if(el) el.hidden=!on; };
+  show('advOnly',adv);            // iron + Plenrens cards
+  show('repairCard',adv);         // damage-repair rate
+  syncCadence();   // field visibility depends on method and mode together
+  // granular-only: hide the other two method buttons
+  document.querySelectorAll('#form button').forEach(b=>{
+    b.style.display=(!adv&&b.dataset.v!=='gran')?'none':'';
+  });
+  const hint=F('advHint');
+  if(hint) hint.textContent = adv
+    ? 'Everything on: liquid and combination feeding, iron, weed control, and the agronomy behind each number.'
+    : 'Just the essentials — granular feeding, and how much to put down. Turn on for liquid feeding, iron and weed control.';
+
+  // mismatch: configuration needs features simple mode does not show
+  const why=adv?[]:advNeeds(s);
+  const box=F('advMismatch');
+  if(box){
+    if(!why.length){ box.hidden=true; box.innerHTML=''; }
+    else{
+      box.hidden=false;
+      /* The action clears whatever simple mode cannot show, so the label has
+         to describe that rather than always saying "granular". */
+      const lab = s.form!=='gran' ? 'Switch to granular' : 'Use simple settings';
+      box.innerHTML='<div class="card warnCard"><b>This lawn uses '+why.join(', ')+'.</b>'+
+        '<p class="hint">Simple mode does not show '+(why.length>1?'these':'this')+
+        ', so the plan below still runs your existing setup. Bring it in line, or turn Advanced back on.</p>'+
+        '<div class="nextbtns"><button class="btn sm" id="advConvert">'+lab+'</button>'+
+        '<button class="btn sm ghost" id="advUndo">Turn Advanced back on</button></div></div>';
+      /* readSettings() rebuilds state.settings as a new object, so anything
+         captured here goes stale the moment the plan re-renders. Always reach
+         for the live object inside the handler, never a captured reference. */
+      /* Confirm in-app rather than with confirm(): installed PWAs and in-app
+         webviews often suppress native JS dialogs, which silently returns false
+         and makes the button look dead. Two taps, no dependency on the host. */
+      const c=F('advConvert'), u=F('advUndo');
+      const after=()=>{ save(); writeSettings(); refreshPlan(); syncAdvUI();
+                        renderPlan(); renderSeason(); renderHome(); };
+      if(c){
+        let armed=false, t=null;
+        c.onclick=()=>{
+          if(!armed){
+            armed=true; c.textContent='Tap again to confirm'; c.classList.add('arm');
+            clearTimeout(t);
+            t=setTimeout(()=>{ armed=false; c.textContent=lab; c.classList.remove('arm'); },4000);
+            return;
+          }
+          clearTimeout(t);
+          const cur=state.settings;
+          cur.form='gran'; cur.cadence='rounds'; cur.ironOn=false; cur.slowRel=false;
+          cur.clip='mulch';
+          after();
+        };
+      }
+      if(u) u.onclick=()=>{ state.settings.adv=true; after(); };
+    }
+  }
+}
+
 function goTab(name){
   document.querySelectorAll('nav.tabs button').forEach(b=>{
     const on=b.dataset.tab===name;
@@ -2159,7 +2301,7 @@ function renderHome(){
       : r.status==='due'
       ? (days<=0?'Due today — last day of the window'
          : 'Due this week · any day up to '+r.date.toLocaleDateString(undefined,{day:'numeric',month:'long'}))
-      : 'In '+days+' days · week of '+r.weekStart.toLocaleDateString(undefined,{day:'numeric',month:'long'});
+      : 'In '+days+' days · week '+r.week;
     const mix = r.litres
       ? '<div class="mix"><span>Water <b>'+vol(r.litres)+'</b></span>'+
         '<span>Rate <b>'+Math.round(r.sprayMl)+' mL/m²</b></span>'+
@@ -2168,7 +2310,7 @@ function renderHome(){
     nextCard='<div class="next'+(overdue?' overdue':'')+'"><div class="when">'+
       (overdue?'Missed feed':'Next feed')+'</div>'+
       '<div class="what">'+mass(r.kg)+' of '+esc(s.npk)+'</div>'+
-      '<div class="sub">'+when+' · '+r.gN.toFixed(2)+' g N/m² · '+r.phase+
+      '<div class="sub">'+when+(ADV()?' · '+r.gN.toFixed(2)+' g N/m²':'')+' · '+r.phase+
         (r.growIn?' · grow-in':'')+splitTag+'</div>'+mix+
       '<div class="nextbtns"><button class="btn sm" id="homeLog">Log it</button>'+
         (overdue?'<button class="btn sm ghost" id="homeSkip">Skip it</button>':'')+
@@ -2183,7 +2325,7 @@ function renderHome(){
     ironLine='<div class="recon ahead" style="margin-top:9px"><b>Iron</b> — '+
       Math.round(ir.total)+' g of product, '+
       (ir.status==='due'?'due this week'
-        :'week of '+ir.weekStart.toLocaleDateString(undefined,{day:'numeric',month:'long'}))+
+        :'week '+ir.week)+
       '<div class="sub">'+ir.gFeSO4.toFixed(2)+' g FeSO₄/m² · '+ir.purpose.toLowerCase()+
       ' · in '+vol(ir.litres)+' of water</div></div>';
   }
@@ -2207,9 +2349,16 @@ function renderHome(){
     positionHTML(p)+
     '<div class="card"><p class="eyebrow">Next up</p>'+nextCard+ironLine+'</div>'+
     '<div class="card"><p class="eyebrow">This season</p>'+
-      '<div class="headline"><span class="big">'+applied.toFixed(1)+'</span>'+
-        '<span class="unit">of '+p.target.toFixed(1)+' g N/m² applied</span>'+
-        '<span class="unit" style="margin-left:auto">'+Math.round(pct)+'%</span></div>'+
+      (ADV()
+        ? '<div class="headline"><span class="big">'+applied.toFixed(1)+'</span>'+
+            '<span class="unit">of '+p.target.toFixed(1)+' g N/m² applied</span>'+
+            '<span class="unit" style="margin-left:auto">'+Math.round(pct)+'%</span></div>'
+        /* Simple mode counts the bag, not the nitrogen: the same figures
+           converted back to product at the lawn's own analysis. */
+        : '<div class="headline"><span class="big">'+
+            (p.npk.n>0?mass(gnToKg(applied,p,s)):'—')+'</span>'+
+            '<span class="unit">of '+(p.npk.n>0?mass(p.totalKg):'—')+' applied</span>'+
+            '<span class="unit" style="margin-left:auto">'+Math.round(pct)+'%</span></div>')+
       '<div class="progress"><i style="width:'+pct+'%"></i></div>'+
       reconHTML(p,true).replace('class="recon','style="margin-top:10px" class="recon')+
       '<div class="facts">'+
@@ -2242,19 +2391,10 @@ function renderHome(){
   };
 }
 
-function planSummary(p,s){
-  const cad = s.form==='combi'
-    ? s.rounds+' rounds + '+(s.cadence==='weekly'?'weekly':'2-weekly')+' liquid'
-    : {weekly:'weekly',biweekly:'every 2 weeks',rounds:s.rounds+' rounds'}[s.cadence];
-  const bits=['<b>'+s.area+' m²</b>', REGION[s.region].name,
-              {low:'low input',family:'family lawn',high:'high input'}[s.grade],
-              cad, {gran:'granular',liq:'sprayed',combi:'combination'}[s.form]];
-  if(p.npk.n>0){
-    if(s.form==='combi') bits.push('<b>'+esc(s.npk)+'</b> + <b>'+esc(s.npkLiq||s.npk)+'</b>');
-    else bits.push('<b>'+esc(s.form==='liq'?(s.npkLiq||s.npk):s.npk)+'</b>');
-  }
-  if(isLiq(s.form)&&s.sprayVol>0) bits.push(s.sprayVol+' L');
-  return bits.join(' · ');
+
+/* g N/m² back to kilograms of the actual bag, for the simple view. */
+function gnToKg(gN,p,s){
+  return p.npk.n>0 ? gN/(p.npk.n/100)*(s.area||0)/1000 : 0;
 }
 
 function heroHTML(p,s){
@@ -2267,6 +2407,21 @@ function heroHTML(p,s){
   const cad = s.form==='combi'
     ? s.rounds+' granular + '+p.rounds.filter(r=>r.method==='liq').length+' liquid'
     : {weekly:'weekly',biweekly:'every 2 weeks',rounds:s.rounds+' rounds'}[s.cadence];
+
+  /* Simple mode leads with kilograms of product — the thing you actually
+     measure out — and keeps the nitrogen maths out of sight. */
+  if(!ADV()){
+    return '<div class="card hero">'+
+      '<div class="heroRow">'+
+        '<div><span class="heroBig">'+(p.npk.n>0?mass(p.totalKg):'—')+'</span>'+
+          '<span class="heroUnit">of '+esc(s.npk)+' this year</span></div>'+
+        '<div class="heroSide"><b>'+p.rounds.length+'</b><span>applications</span></div>'+
+      '</div>'+
+      '<div class="progress"><i style="width:'+pct+'%"></i></div>'+
+      '<div class="heroStat"><span class="chip '+chip[0]+'">'+chip[1]+'</span>'+
+        '<span>'+cad+'</span></div>'+
+    '</div>';
+  }
 
   return '<div class="card hero">'+
     '<div class="heroRow">'+
@@ -2312,24 +2467,26 @@ function renderPlan(){
     '<p class="hint">Dissolve and spray at about '+ip.ml+' mL/m² — '+vol(ip.rounds[0].litres)+
       ' per pass here. Iron stains stone, decking and clothing.</p>'+
     ip.flags.map(flagHTML).join('');
-  document.getElementById('planSummary').innerHTML=planSummary(p,s);
   document.getElementById('plenOut').innerHTML=plenrensHTML(p,s,state.entries);
+  /* The plan itself sits above the season curve; the supporting cards follow
+     it, so the chart reads directly against the applications list. */
   document.getElementById('planOut').innerHTML=
   heroHTML(p,s)+
 
   '<div class="card">'+
     '<p class="eyebrow">Applications</p>'+
     roundsHTML(p,s)+
-    p.flags.map(flagHTML).join('')+
+    p.flags.filter(f=>ADV()||f.t!=='info').map(flagHTML).join('')+
     '<details class="disc"><summary>How to read this</summary><div class="body">'+
       '<p class="hint" style="margin:0 0 6px">Untick any week you will be away — its feed is shared across the others.</p>'+
       '<p class="hint" style="margin:0">Dates are guides. Hold the first until the soil reaches 5–6 °C and growth starts. Spread on dry grass before rain, never in strong sun.</p>'+
     '</div></details>'+
-  '</div>'+
+  '</div>';
 
+  document.getElementById('planExtra').innerHTML=
   sprayHTML(p,s)+
 
-  '<div class="card">'+
+  (ADV() ? '<div class="card">'+
     '<p class="eyebrow">'+(s.form==='combi'?'Do your two bags cover P and K?':'Is '+esc(s.npk)+' the right bag?')+'</p>'+
     '<p style="font-size:13px;margin:0 0 4px">Grass takes nutrients up in near-constant proportions. Across everything you apply, aim for <span class="num">P 14</span>, <span class="num">K 65</span> against N at 100.</p>'+
     '<div class="balance">'+
@@ -2346,7 +2503,7 @@ function renderPlan(){
     (kHigh?'<div class="flag info"><b>High potassium is fine.</b> Grass banks the surplus harmlessly. It just will not improve winter survival, whatever the bag claims.</div>':'')+
     combiBalHTML(p)+
     '<p class="hint">Phosphorus is most available at pH 6.0–6.5. Norwegian garden soil often sits below that — that is when liming pays.</p>'+
-  '</div>';
+  '</div>' : '');
   document.getElementById('planOut').querySelectorAll('[data-wk]').forEach(b=>b.onchange=()=>{
     const wk=Number(b.dataset.wk), a=new Set(state.settings.away||[]);
     if(b.checked) a.delete(wk); else a.add(wk);
@@ -2495,15 +2652,6 @@ function renderSeason(){
   const mows=yrE.filter(e=>e.type==='mow');
   const lastMow=mows.length?mows.map(e=>e.date).sort().pop():null;
 
-  document.getElementById('seasonStats').innerHTML=
-    '<div class="stat"><div class="k">Nitrogen applied</div><div class="v">'+totN.toFixed(1)+'</div><div class="s">of '+p.target.toFixed(1)+' g N/m² planned</div></div>'+
-    '<div class="stat"><div class="k">Since 1 Sep</div><div class="v">'+autN.toFixed(1)+'</div><div class="s">ceiling '+AUTUMN_CAP+' g N/m²</div></div>'+
-    '<div class="stat"><div class="k">Mows logged</div><div class="v">'+mows.length+'</div><div class="s">'+
-      (lastMow?'last '+parseISO(lastMow).toLocaleDateString(undefined,{day:'numeric',month:'short'}):'none yet')+'</div></div>'+
-    '<div class="stat"><div class="k">Feeds logged</div><div class="v">'+yrE.filter(e=>e.type==='fert').length+
-      '</div><div class="s">of '+p.rounds.length+' planned</div></div>';
-  document.getElementById('seasonBar').style.width=Math.min(100,totN/p.target*100)+'%';
-
   let fl='';
   if(yr!==now){
     const pct=p.target>0?totN/p.target*100:0;
@@ -2564,6 +2712,7 @@ function readSettings(){
   state.settings={
     area:Math.max(1,parseFloat(F('area').value)||200),
     region:F('region').value, grade:segGet('grade'),
+    adv:F('advMode').checked,
     clip:F('clipBox').checked?'remove':'mulch', shade:segGet('shade'), soil:F('soil').value, slowRel:F('slowRel').checked,
     cadence:segGet('form')==='gran' ? 'rounds' : segGet('cadence'),
     rounds:Number(segGet('granCad'))||4,
@@ -2593,6 +2742,7 @@ function writeSettings(){
   F('granShare').value=s.granShare||50; F('shareVal').textContent=(s.granShare||50)+'%';
   F('clipBox').checked = s.clip==='remove';
   F('slowRel').checked = !!s.slowRel;
+  F('advMode').checked = !!s.adv;
   F('uptake').value=s.uptake; F('tank').value=s.tank;
   F('plenProd').value=s.plenProd; F('plenArea').value=s.plenArea||'';
   F('sprayVol').value=s.sprayVol||'';
@@ -2610,9 +2760,13 @@ function syncCadence(){
   F('cadLabel').textContent     = combi?'Liquid feed every':'Feed every';
   F('npkLabel').textContent     = combi?'Granular fertiliser':'Fertiliser';
   F('npkLiqLabel').textContent  = combi?'Liquid fertiliser':'Fertiliser';
-  F('sprayFields').hidden = !liq;
-  F('volFields').hidden = !liq;
-  F('slowField').hidden = f==='liq';
+  const adv=ADV();
+  F('volFields').hidden   = !liq;
+  F('sprayFields').hidden = !liq || !adv;      // leaf/soil route and tank size
+  F('slowField').hidden   = f==='liq' || !adv; // slow-release is a granular idea
+  F('soilField').hidden   = !adv;
+  F('oxideField').hidden  = !adv;
+  F('clipField').hidden   = !adv;
   F('ironFieldsPlan').hidden = !F('ironOn').checked;
   F('ironIntervalField').hidden = !F('ironOn').checked || F('ironPurpose').value!=='colorUS';
   if(document.getElementById('volEcho')) echoVol();
@@ -2648,24 +2802,24 @@ function renderLawnList(){
   });
   F('lawnList').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
     const l=store.lawns.find(x=>x.id===b.dataset.del);
-    if(!confirm('Delete "'+l.name+'" and everything logged against it?')) return;
+    if(!ask('Delete "'+l.name+'" and everything logged against it?')) return;
     store.lawns=store.lawns.filter(x=>x.id!==l.id);
     if(store.activeId===l.id){ store.activeId=store.lawns[0].id; state=store.lawns[0]; writeSettings(); refreshPlan(); }
     save(); renderLawnList(); renderLawnBar();
     renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
   });
 }
+/* Settings live on their own tab now. "Edit" is just navigation, and every
+   field commits as you change it — there is no Done button to forget. */
 function openEdit(){
   F('lawnName').value=state.name;
-  F('editTitle').textContent=state.name;
-  writeSettings();
-  F('editScrim').hidden=false; F('editSheet').hidden=false;
+  writeSettings(); syncAdvUI();
+  goTab('settings');
 }
-function closeEdit(){
+function commitSettings(){
   const nm=F('lawnName').value.trim();
-  if(nm&&nm!==state.name){ state.name=nm; }
-  readSettings(); save(); refreshPlan();
-  F('editScrim').hidden=true; F('editSheet').hidden=true;
+  if(nm&&nm!==state.name) state.name=nm;
+  readSettings(); save(); refreshPlan(); syncAdvUI();
   renderLawnBar(); renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
 }
 
@@ -2809,9 +2963,14 @@ F('cancelEntry').onclick=closeSheet;
 F('scrim').onclick=closeSheet;
 F('addBtn').onclick=()=>openSheet('mow');
 F('lawnSwitch').onclick=openLawnSheet;
-F('editLawn').onclick=openEdit;
-F('editDone').onclick=closeEdit;
-F('editScrim').onclick=closeEdit;
+/* Settings tab commits on change — wire every field to save itself. */
+['lawnName','area','region','npk','npkLiq','soil','oxide','tank','uptake','sprayVol','plenArea','ironFe']
+  .forEach(id=>{ const el=F(id); if(el) el.addEventListener('change',commitSettings); });
+F('advMode')&&(F('advMode').onchange=commitSettings);
+['clipBox','slowRel','ironOn','repair2'].forEach(id=>{
+  const el=F(id); if(el) el.addEventListener('change',commitSettings); });
+['ironPurpose','ironInterval','plenProd'].forEach(id=>{
+  const el=F(id); if(el) el.addEventListener('change',commitSettings); });
 function echoVol(){
   const v=parseFloat(F('sprayVol').value), a=Math.max(1,parseFloat(F('area').value)||1);
   if(!(v>0)){ F('volEcho').textContent='Auto — the app picks the volume.'; return; }
@@ -2836,11 +2995,17 @@ F('importFile').onchange=()=>{
 };
 F('impAdd').onclick=()=>finishImport('add');
 F('impReplace').onclick=()=>{
-  if(confirm('Replace all '+store.lawns.length+' current lawn'+(store.lawns.length===1?'':'s')+
+  if(ask('Replace all '+store.lawns.length+' current lawn'+(store.lawns.length===1?'':'s')+
              ' and everything logged against them? This cannot be undone.')) finishImport('replace');
 };
 F('impCancel').onclick=closeImport;
 F('impScrim').onclick=closeImport;
+function openAbout(){ F('aboutScrim').hidden=false; F('aboutSheet').hidden=false; }
+function closeAbout(){ F('aboutScrim').hidden=true;  F('aboutSheet').hidden=true;  }
+F('aboutBtn').onclick=openAbout;
+F('aboutDone').onclick=closeAbout;
+F('aboutScrim').onclick=closeAbout;
+
 F('themeBtn').onclick=()=>{
   store.theme = store.theme==='dark'?'light':'dark';
   applyTheme(store.theme); save();
@@ -2859,10 +3024,10 @@ F('l_add').onclick=()=>{
 };
 document.addEventListener('keydown',ev=>{
   if(ev.key!=='Escape') return;
+  if(!F('aboutSheet').hidden) closeAbout();
   if(!F('sheet').hidden) closeSheet();
   if(!F('lawnSheet').hidden) closeLawnSheet();
   if(!F('impSheet').hidden) closeImport();
-  if(!F('editSheet').hidden) closeEdit();
 });
 
 /* ============================================================
@@ -2881,12 +3046,15 @@ F('granShare').addEventListener('input',()=>{ F('shareVal').textContent=F('granS
  'plenProd','plenArea','ironOn','ironPurpose','ironFe','ironInterval']
   .forEach(id=>F(id).addEventListener('change',onSet));
 
+/* One code path for switching tabs: goTab drives both the click handler and
+   any programmatic navigation, so a new or removed tab only has to be right
+   in one place. */
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('nav.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
-  ['home','log','plan','season'].forEach(t=>F('p-'+t).hidden=(t!==b.dataset.tab));
-  if(b.dataset.tab==='season') renderSeason();
-  if(b.dataset.tab==='home') renderHome();
-  window.scrollTo({top:0,behavior:'instant'});
+  const t=b.dataset.tab;
+  goTab(t);
+  if(t==='plan')     renderPlan(), renderSeason();
+  if(t==='home')     renderHome();
+  if(t==='settings') { writeSettings(); syncAdvUI(); }
 });
 
 F('yrPrev').onclick=()=>{viewYear--; renderSeason();};
@@ -2922,7 +3090,7 @@ function wireSync(){
     if(!ok) alert('Backup is on, but the first upload did not go through. It will retry next time you change something.');
   });
   $('syncOffBtn')&&($('syncOffBtn').onclick=()=>{
-    if(confirm('Turn off backup? Your log stays on this device, but it will no longer be copied off it.')){
+    if(ask('Turn off backup? Your log stays on this device, but it will no longer be copied off it.')){
       Sync.unlink(); renderSyncLine();
     }
   });
@@ -2938,7 +3106,7 @@ function wireSync(){
   $('syncJoinBtn')&&($('syncJoinBtn').onclick=async()=>{
     const v=($('syncJoin').value||'').toUpperCase().trim();
     if(!/^[A-Z0-9]{8,32}$/.test(v)){ alert('That code does not look right — it should be 8 characters.'); return; }
-    if(!confirm('Link this device to that code? The log stored here now will be replaced by the one from your other device.')) return;
+    if(!ask('Link this device to that code? The log stored here now will be replaced by the one from your other device.')) return;
     Sync.link(v);
     const remote=await Sync.pull(0);
     if(remote&&remote.data){
@@ -2963,7 +3131,7 @@ F('exportBtn').onclick=()=>{
   URL.revokeObjectURL(a.href);
 };
 F('clearBtn').onclick=()=>{
-  if(confirm('Delete every entry logged against "'+state.name+'"? Its settings stay, and your other lawns are untouched.')){
+  if(ask('Delete every entry logged against "'+state.name+'"? Its settings stay, and your other lawns are untouched.')){
     state.entries=[]; save(); refreshPlan(); renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
   }
 };
@@ -2974,7 +3142,7 @@ F('clearBtn').onclick=()=>{
 (async()=>{
   const local=await Store.get();
   loadStore(local);
-  writeSettings(); refreshPlan(); renderLawnBar();
+  writeSettings(); syncAdvUI(); refreshPlan(); renderLawnBar();
   renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
 
   /* Catch up from the backup after the UI is already usable. If the stored
