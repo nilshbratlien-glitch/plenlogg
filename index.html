@@ -287,6 +287,15 @@ button{font-family:var(--sans);cursor:pointer;border-radius:8px;font-size:14px}
 .btn.danger{background:var(--card);color:var(--danger);border:1px solid var(--danger-line)}
 .btn.sm{width:auto;padding:8px 13px;font-size:13px}
 
+.fab{position:fixed;right:16px;z-index:39;border:none;border-radius:999px;
+  bottom:calc(70px + env(safe-area-inset-bottom));
+  background:var(--chloro);color:#fff;font-family:var(--cond);font-weight:600;
+  display:flex;align-items:center;gap:6px;padding:12px 17px 12px 15px;font-size:15px;
+  box-shadow:0 6px 18px rgba(0,0,0,.22)}
+.fab span{font-size:14px;letter-spacing:.01em}
+.why{font-family:var(--mono);font-size:11px;color:var(--chloro);
+  background:var(--chloro-soft);border-radius:7px;padding:6px 9px;margin-bottom:11px}
+
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--tabs);
   backdrop-filter:blur(8px);border-top:1px solid var(--line);
   padding:7px 8px calc(7px + env(safe-area-inset-bottom));display:flex;gap:4px}
@@ -655,6 +664,8 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
   </section>
 </div>
 
+<button class="fab" id="fab" aria-label="Log work">+<span>Log</span></button>
+
 <nav class="tabs" role="tablist">
   <button role="tab" aria-selected="true" data-tab="home"><span class="ic">◈</span>Home</button>
   <button role="tab" aria-selected="false" data-tab="log"><span class="ic">▦</span>Log</button>
@@ -750,6 +761,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
   <h3 id="sheetTitle">Add work</h3>
   <div class="d" id="sheetDate"></div>
   <div class="chips" id="typeChips"></div>
+  <div class="why" id="sheetWhy" hidden></div>
   <div id="fertFields" hidden>
     <div class="grid2">
       <div class="field"><label for="fKg">Fertiliser used (kg)</label><input id="fKg" inputmode="decimal" placeholder="4.0"><div class="hint" id="fKgEcho" style="margin-top:4px"></div></div>
@@ -2835,7 +2847,7 @@ function openLawnSheet(){
   F('l_name').value=''; F('l_area').value=''; F('l_region').value=state.settings.region;
   renderLawnList(); F('lawnScrim').hidden=false; F('lawnSheet').hidden=false;
 }
-function closeLawnSheet(){ F('lawnScrim').hidden=true; F('lawnSheet').hidden=true; }
+function closeLawnSheet(){ F('lawnScrim').hidden=true; F('lawnSheet').hidden=true; fabShow(true); }
 
 /* Import. Accepts either the multi-lawn export or the old single-lawn one.
    Ids are regenerated so an "add" can never collide with existing lawns. */
@@ -2871,9 +2883,9 @@ function openImport(res){
   F('impSummary').textContent=res.lawns.length+' lawn'+(res.lawns.length===1?'':'s')+
     ' and '+res.entries+' logged entr'+(res.entries===1?'y':'ies')+': '+
     res.lawns.map(l=>l.name).join(', ')+'.';
-  F('impScrim').hidden=false; F('impSheet').hidden=false;
+  fabShow(false); F('impScrim').hidden=false; F('impSheet').hidden=false;
 }
-function closeImport(){ pendingImport=null; F('impScrim').hidden=true; F('impSheet').hidden=true; }
+function closeImport(){ pendingImport=null; F('impScrim').hidden=true; F('impSheet').hidden=true; fabShow(true); }
 
 function finishImport(mode){
   if(!pendingImport) return;
@@ -2889,7 +2901,41 @@ function finishImport(mode){
   renderLawnBar(); renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
 }
 
-function openSheet(type,kg,entry){
+/* ---- what the log button should guess ----
+   Most opens are one of two things: confirming the feed the plan just told
+   you about, or recording a mow. Guess the feed only when one is actually
+   pending and not already logged this week — otherwise a wrong guess costs
+   a tap and, worse, invites double-logging on the day you are most likely
+   to open the app twice. Mowing is the safe default the rest of the time. */
+function logGuess(){
+  const p=plan;
+  if(!p||!p.rounds) return {type:'mow'};
+  const r=p.rounds.find(x=>x.status==='due')||p.rounds.find(x=>x.status==='overdue');
+  if(!r) return {type:'mow'};
+  /* Anything already logged inside this round's week means the feed is done;
+     pre-filling it again is how you double-log. */
+  const a=r.weekStart.getTime(), b=a+6*86400000;
+  const already=state.entries.some(e=>e.type==='fert'&&
+    distToWeek(parseISO(e.date).getTime(),a,b)===0);
+  if(already) return {type:'mow'};
+  const when = r.status==='overdue' ? 'overdue' : 'due now';
+  return {type:'fert', kg:r.kg, round:r,
+          why:(r.split?'Pass '+r.split.k+' of '+r.split.n:'Week '+r.week)+' · '+when};
+}
+
+function openLog(){
+  const g=logGuess();
+  /* Log against today, wherever the calendar happens to be parked. */
+  selected=iso(new Date());
+  view=new Date(parseISO(selected).getFullYear(),parseISO(selected).getMonth(),1);
+  goTab('log'); renderCal(); renderDay();
+  openSheet(g.type, g.kg||null, null, g.why||'');
+}
+
+/* The FAB would otherwise hover over the dimmed page behind an open sheet. */
+function fabShow(on){ const f=F('fab'); if(f) f.hidden=!on; }
+
+function openSheet(type,kg,entry,why){
   draftType=type||'mow'; draftKg=kg||null; editingId=entry?entry.id:null;
   const selD=parseISO(selected), todayD=new Date(new Date().setHours(0,0,0,0));
   F('sheetDate').textContent=selD.toLocaleDateString(undefined,
@@ -2902,8 +2948,10 @@ function openSheet(type,kg,entry){
     F('typeChips').querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x.dataset.t===draftType));
     syncSheetFields();
   });
+  const wy=F('sheetWhy');
+  if(wy){ wy.textContent=why||''; wy.hidden=!why; }
   syncSheetFields();
-  F('fKg').value=draftKg?(draftKg<1?draftKg.toFixed(2):draftKg.toFixed(1)):'';
+  F('fKg').value=draftKg?kgField(draftKg):'';
   echoKg();
   F('fNpk').value=state.settings.npk;
   F('mHt').value=''; F('sTemp').value=''; F('sTempEcho').textContent=''; F('note').value='';
@@ -2919,8 +2967,17 @@ function openSheet(type,kg,entry){
     if(entry.fePct) F('iFe').value=entry.fePct;
     echoKg(); echoTemp();
   } else F('sheetTitle').textContent='Add work';
+  fabShow(false);
   F('scrim').hidden=false; F('sheet').hidden=false;
 }
+/* Pre-filled quantities need three decimals: on a small lawn a round can be
+   0.038 kg, and two decimals rounds that to 0.04 — a 5% error before the
+   spreader is even out. Trailing zeros are trimmed so 0.500 reads as 0.5. */
+function kgField(v){
+  const t=(v<1?v.toFixed(3):v.toFixed(2));
+  return t.indexOf('.')<0 ? t : t.replace(/0+$/,'').replace(/\.$/,'');
+}
+
 function echoKg(){
   const v=parseFloat(F('fKg').value);
   F('fKgEcho').textContent = v>0 ? 'That is '+mass(v)+(v<0.02?' — did you mean grams?':'') : '';
@@ -2939,7 +2996,7 @@ function echoTemp(){
     : 'Below 5 °C. Too cold to feed; the grass cannot use it yet.';
 }
 F('sTemp').addEventListener('input',echoTemp);
-function closeSheet(){editingId=null; F('scrim').hidden=true; F('sheet').hidden=true;}
+function closeSheet(){editingId=null; F('scrim').hidden=true; F('sheet').hidden=true; fabShow(true);}
 
 F('saveEntry').onclick=()=>{
   const prev = editingId ? state.entries.find(x=>x.id===editingId) : null;
@@ -2970,6 +3027,7 @@ F('saveEntry').onclick=()=>{
 F('cancelEntry').onclick=closeSheet;
 F('scrim').onclick=closeSheet;
 F('addBtn').onclick=()=>openSheet('mow');
+F('fab').onclick=openLog;
 F('lawnSwitch').onclick=openLawnSheet;
 /* Settings tab commits on change — wire every field to save itself. */
 ['lawnName','area','region','npk','npkLiq','soil','oxide','tank','uptake','sprayVol','plenArea','ironFe']
@@ -3008,8 +3066,8 @@ F('impReplace').onclick=()=>{
 };
 F('impCancel').onclick=closeImport;
 F('impScrim').onclick=closeImport;
-function openAbout(){ F('aboutScrim').hidden=false; F('aboutSheet').hidden=false; }
-function closeAbout(){ F('aboutScrim').hidden=true;  F('aboutSheet').hidden=true;  }
+function openAbout(){ F('aboutScrim').hidden=false; F('aboutSheet').hidden=false; fabShow(false); }
+function closeAbout(){ F('aboutScrim').hidden=true;  F('aboutSheet').hidden=true;  fabShow(true); }
 F('aboutVer').textContent='v'+VERSION;
 F('aboutBtn').onclick=openAbout;
 F('aboutDone').onclick=closeAbout;
