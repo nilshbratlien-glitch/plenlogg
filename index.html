@@ -834,31 +834,41 @@ const Sync={
   unlink(){ this.save({}); },
   /* Push: fire-and-forget. A failure here must never cost the user their
      local save, so it resolves quietly and just leaves `last` untouched. */
+  /* The uploaded timestamp must be when the DOCUMENT was last edited, never
+     when it happened to be uploaded. Stamping upload time lets a device with
+     stale data overwrite good data simply by opening the app. */
   async push(doc){
     if(!this.enabled()) return false;
+    const mtime=(doc&&doc.updated)||0;
+    if(!mtime) return false;
     try{
-      const t=Date.now();
       const r=await fetch('/api/sync?code='+encodeURIComponent(this.code),{
         method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({data:doc,updated:t})
+        body:JSON.stringify({data:doc,updated:mtime})
       });
-      if(r.ok){ this.last=t; return true; }
+      if(r.ok){ this.last=Date.now(); return true; }
     }catch(e){}
     return false;
   },
   /* Pull: returns the remote document only if it is newer than what we hold. */
+  /* Returns {status,doc}: 'newer' (adopt it), 'older' (ours wins, safe to
+     push), 'empty' (nothing stored yet) or 'error' (could not reach the
+     server — must NOT be treated as "ours is newer", or a failed read turns
+     into a destructive write). */
   async pull(localUpdated){
-    if(!this.enabled()) return null;
+    if(!this.enabled()) return {status:'error'};
     try{
       const r=await fetch('/api/sync?code='+encodeURIComponent(this.code),{cache:'no-store'});
-      if(!r.ok) return null;
+      if(r.status===404) { this.last=Date.now(); return {status:'empty'}; }
+      if(!r.ok) return {status:'error'};
       const j=await r.json();
-      if(!j||typeof j.data==='undefined') return null;
+      if(!j||typeof j.data==='undefined') return {status:'empty'};
       this.last=Date.now();
-      if(!localUpdated || (j.updated||0) > localUpdated) return j;
-      return null;
+      const remoteT=j.updated||0;
+      if(remoteT>(localUpdated||0)) return {status:'newer',doc:j};
+      return {status:'older',doc:j};
     }catch(e){}
-    return null;
+    return {status:'error'};
   }
 };
 
@@ -3201,9 +3211,9 @@ function wireSync(){
     if(!/^[A-Z0-9]{8,32}$/.test(v)){ alert('That code does not look right — it should be 8 characters.'); return; }
     if(!ask('Link this device to that code? The log stored here now will be replaced by the one from your other device.')) return;
     Sync.link(v);
-    const remote=await Sync.pull(0);
-    if(remote&&remote.data){
-      loadStore(remote.data); save();
+    const res=await Sync.pull(0);
+    if(res.status==='newer'&&res.doc){
+      loadStore(res.doc.data); save();
       writeSettings(); refreshPlan(); renderLawnBar();
       renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
       renderSyncLine();
@@ -3243,12 +3253,16 @@ F('clearBtn').onclick=()=>{
      the backup is current. Either way the app was interactive first. */
   if(Sync.enabled()){
     try{
-      const remote=await Sync.pull(local&&local.updated||0);
-      if(remote&&remote.data){
-        loadStore(remote.data);
+      const res=await Sync.pull(local&&local.updated||0);
+      if(res.status==='newer'){
+        loadStore(res.doc.data);
         writeSettings(); refreshPlan(); renderLawnBar();
         renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
-      }else if(store){
+      }else if((res.status==='older'||res.status==='empty') && store && store.updated){
+        /* Only publish ours when we have actually SEEN the remote copy and
+           ours is genuinely newer. On 'error' we do nothing: a read that
+           failed tells us nothing about which side is current, and pushing
+           blind is how good data gets overwritten. */
         Sync.push(store);
       }
     }catch(e){}
