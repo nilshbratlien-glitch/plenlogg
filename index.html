@@ -202,6 +202,14 @@ input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;width:auto;marg
 .pastnote{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px}
 .app.iron .lb b{font-weight:600}
 .app.iron .mk{color:#8A7563}
+/* Cultural work reads as its own family — distinct from feeds, but on the
+   same grid so the dates line up down the column. */
+.app.op .mk{font-size:13px}
+.app.op-vc .mk{color:#6E8B5C}
+.app.op-ae .mk{color:#5C7D8B}
+.app.op-td .mk{color:#9A8C6E}
+.app.op-hb .mk{color:#7E7099}
+.app.op .ds{font-family:var(--mono);font-size:11px;color:var(--muted)}
 .ironbar{display:flex;gap:8px;margin-top:10px}
 .ironbar div{flex:1;border:1px solid var(--line-soft);border-radius:8px;padding:8px 9px;font-family:var(--mono);font-size:11.5px}
 .ironbar b{display:block;font-size:15px;font-weight:600;margin-top:1px}
@@ -310,9 +318,14 @@ nav.tabs button[aria-selected=true]{color:var(--chloro);background:var(--chloro-
 .calbar .mo{font-family:var(--cond);font-size:18px;font-weight:700}
 .calbar .yr{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:6px}
 .navbtn{background:var(--card);border:1px solid var(--line);width:34px;height:34px;font-size:16px;color:var(--ink);line-height:1}
-.dow{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-family:var(--mono);font-size:9.5px;
+.dow{display:grid;grid-template-columns:22px repeat(7,1fr);gap:3px;font-family:var(--mono);font-size:9.5px;
   letter-spacing:.06em;color:var(--muted);text-transform:uppercase;text-align:center;margin-bottom:4px}
-.days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.days{display:grid;grid-template-columns:22px repeat(7,1fr);gap:3px}
+.wknum{font-family:var(--mono);font-size:9.5px;color:var(--muted);opacity:.65;
+  display:flex;align-items:center;justify-content:center}
+/* A day carrying cultural work gets a quiet outline rather than a fill, so it
+   reads as scheduled rather than logged. */
+.day.hasop{border-color:var(--chloro);border-style:dashed}
 .day{position:relative;aspect-ratio:1/1;border:1px solid var(--line-soft);border-radius:7px;background:var(--card);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0;
   font-family:var(--mono);font-size:13px;color:var(--ink)}
@@ -444,7 +457,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
         <div><span class="mo" id="moName"></span><span class="yr" id="moYear"></span></div>
         <button class="navbtn" id="nextMo" aria-label="Next month">›</button>
       </div>
-      <div class="dow"><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div><div>Su</div></div>
+      <div class="dow"><div>wk</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div><div>Su</div></div>
       <div class="days" id="days"></div>
       <div class="callegend"><span><span class="ring"></span> fertiliser due</span><span>● work logged</span></div>
     </div>
@@ -623,7 +636,66 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
     <div class="card">
       <p class="eyebrow">Detail level</p>
       <div class="check"><input type="checkbox" id="advMode"><label for="advMode">Advanced</label></div>
+      <div class="check" id="gkField" hidden style="margin-top:9px"><input type="checkbox" id="gkMode"><label for="gkMode">Greenkeeper</label></div>
       <p class="hint" id="advHint"></p>
+    </div>
+
+    <div class="card" id="gkCards" hidden>
+      <p class="eyebrow">Cultural work</p>
+      <p class="hint" style="margin-top:0">Scheduled alongside the feeding plan. Turn on what you actually do.</p>
+
+      <div class="check" style="margin-top:12px"><input type="checkbox" id="aeOn"><label for="aeOn">Aeration</label></div>
+      <div id="aeFields" hidden>
+        <div class="field"><label for="aeType">How deep</label>
+          <select id="aeType">
+            <option value="solid" selected>Solid tining — holes, soil stays</option>
+            <option value="hollow">Hollow coring — plugs pulled out</option>
+          </select>
+          <div class="hint" id="aeEcho" style="margin-top:4px"></div>
+        </div>
+        <div class="field"><label>Times per season</label>
+          <div class="seg" id="aeTimes" data-cur="1">
+            <button data-v="1">Once</button><button data-v="2">Twice</button>
+          </div></div>
+      </div>
+
+      <div class="check" style="margin-top:12px"><input type="checkbox" id="vcOn"><label for="vcOn">Verticutting</label></div>
+      <div id="vcFields" hidden>
+        <div class="field"><label for="vcSeverity">How deep</label>
+          <select id="vcSeverity">
+            <option value="groom">Grooming — tickle the surface</option>
+            <option value="scarify" selected>Scarifying — into the thatch</option>
+            <option value="renovate">Renovating — down to soil</option>
+          </select>
+          <div class="hint" id="vcEcho" style="margin-top:4px"></div>
+        </div>
+        <div class="field"><label id="vcTimesLabel">Times per season</label>
+          <div class="seg" id="vcTimes" data-cur="1">
+            <button data-v="1">Once</button><button data-v="2">Twice</button><button data-v="3">Three</button>
+          </div></div>
+      </div>
+
+      <div class="check" style="margin-top:12px"><input type="checkbox" id="tdOn"><label for="tdOn">Top dressing</label></div>
+      <div id="tdFields" hidden>
+        <div class="grid2">
+          <div class="field"><label>Times per season</label>
+            <div class="seg" id="tdTimes" data-cur="1">
+              <button data-v="1">Once</button><button data-v="2">Twice</button><button data-v="3">Three</button>
+            </div></div>
+          <div class="field"><label for="tdDepth">Depth each time (mm)</label>
+            <input id="tdDepth" inputmode="decimal" value="3">
+            <div class="hint" id="tdEcho" style="margin-top:4px"></div></div>
+        </div>
+      </div>
+
+      <div class="check" style="margin-top:12px"><input type="checkbox" id="hbOn"><label for="hbOn">Herbicide</label></div>
+      <div id="hbFields" hidden>
+        <div class="field"><label>Times per season</label>
+          <div class="seg" id="hbTimes" data-cur="1">
+            <button data-v="1">Once</button><button data-v="2">Twice</button>
+          </div>
+          <div class="hint" id="hbEcho" style="margin-top:4px"></div></div>
+      </div>
     </div>
 
 <div class="card">
@@ -926,11 +998,11 @@ const TYPES=[
   {id:'mow',label:'Mowing',color:'#6E8B7A'},
   {id:'fert',label:'Fertilising',color:'#2E7D4F'},
   {id:'water',label:'Watering',color:'#4F7C93'},
-  {id:'scar',label:'Scarifying',color:'#A9652E'},
+  {id:'scar',label:'Verticutting',color:'#A9652E'},   // id kept: logged entries reference it
   {id:'aer',label:'Aerating',color:'#7A5C3E'},
   {id:'seed',label:'Overseeding',color:'#B08A1E'},
   {id:'lime',label:'Liming',color:'#8E8E9C'},
-  {id:'weed',label:'Weed control',color:'#9A4B4B'},
+  {id:'weed',label:'Herbicide',color:'#9A4B4B'},   // id kept: logged entries reference it
   {id:'top',label:'Topdressing',color:'#6B6B4E'},
   {id:'iron',label:'Iron',color:'#7D6B5D'},
   {id:'soil',label:'Soil temperature',color:'#7E9AA8'},
@@ -940,7 +1012,14 @@ const T=id=>TYPES.find(t=>t.id===id)||TYPES[9];
 
 const DEFAULTS={area:200,region:'south',clip:'mulch',
   shade:'sun',grade:'family',soil:'loam',cadence:'biweekly',npkLiq:'15-0-0',granShare:50,rounds:4,form:'gran',slowRel:false,npk:'14-3-15',oxide:'elem',repair:false,uptake:'leaf',tank:15,plenProd:'kons',plenArea:0,away:[],skips:[],sprayVol:0,adv:false,
-  ironOn:false,ironPurpose:'colour',ironFe:20.1,ironInterval:3};
+  ironOn:false,ironPurpose:'colour',ironFe:20.1,ironInterval:3,
+  /* Greenkeeper mode: cultural operations alongside the feeding plan. Each
+     schedule is independent; the sequencing between them comes later. */
+  gk:false,
+  vcOn:false, vcSeverity:'scarify', vcTimes:1,
+  aeOn:false, aeType:'solid', aeTimes:1,
+  tdOn:false, tdTimes:1, tdDepth:3,
+  hbOn:false, hbTimes:1};
 
 const uid=()=>Math.random().toString(36).slice(2,9);
 function newLawn(name){return {id:uid(),name:name||'My lawn',settings:{...DEFAULTS},entries:[]};}
@@ -994,6 +1073,7 @@ function switchLawn(id){
 }
 let plan=null;                 // cached computed plan
 let planByDate=new Map();      // iso -> round
+let opsByDate=new Map();       // iso -> [cultural operations]
 let view=new Date(); view.setDate(1);
 let selected=iso(new Date());
 let draftType='mow', draftKg=null, editingId=null;
@@ -1112,8 +1192,12 @@ function isoWeekOf(d){
 }
 /* Fertiliser quantities swing from a few grams on a weekly schedule to
    several kilos on big rounds. Show whichever unit reads naturally. */
+/* One ladder for every weight in the app — grams, kilos, tonnes — so a bag of
+   fertiliser and a load of top dressing read the same way. Tenths below ten of
+   any unit, whole numbers above. */
 function mass(kg){
   if(!isFinite(kg)||kg<=0) return '0 g';
+  if(kg>=1000){ const t=kg/1000; return t.toFixed(t<10?1:0)+' t'; }
   if(kg>=1) return kg.toFixed(kg<10?1:0)+' kg';
   const g=kg*1000;
   return (g<10?g.toFixed(1):Math.round(g))+' g';
@@ -1178,6 +1262,130 @@ function seasonWindow(s,entries,year,today){
   return {R,start,end,startSrc,endSrc};
 }
 
+/* ============================================================
+   Cultural operations — greenkeeper mode
+
+   Each schedule places its work in the weeks where it does most good and
+   least harm, given the season window the fertiliser model already
+   computes. Nothing here touches nitrogen yet; that is the next step.
+
+   Verticutting wants strong growth ahead of it so the sward closes the
+   wounds — late spring once growth is established, and if repeated, again
+   before the autumn slowdown rather than during it.
+
+   Top dressing follows the same logic: the grass has to grow up through
+   the sand, so it needs growing weather afterwards.
+
+   Weed control wants actively growing weeds and unstressed turf, which in
+   practice means late spring, with a second pass in late summer.
+   ============================================================ */
+/* recover = weeks of raised demand afterwards; mult = how much raised.
+   Verticutting removes leaf and opens the sward, so the grass rebuilds
+   tissue — the same shape of demand as repair mode, scaled to how deep the
+   blades went. lockout = weeks before weed control is safe on thin turf. */
+const VC_SEVERITY={
+  groom:   {label:'Grooming',   recover:2, lockout:1, mult:1.15},
+  scarify: {label:'Scarifying', recover:3, lockout:2, mult:1.30},
+  renovate:{label:'Renovating', recover:4, lockout:3, mult:1.50}
+};
+/* Aeration works the root zone rather than the surface: compaction, gas
+   exchange, rooting depth. Solid tining leaves the soil in place; hollow
+   coring pulls plugs out, which is the most disruptive thing done to a
+   surface and leaves holes that have to be filled. */
+const AER_TYPE={
+  solid: {label:'Solid tining', recover:2, mult:1.15, needsDress:false},
+  hollow:{label:'Hollow coring',recover:3, mult:1.40, needsDress:true}
+};
+
+/* Growing up through sand costs the plant something, but nothing was removed,
+   so the demand is milder and shorter than a verticut. */
+const TD_MULT=1.15, TD_WEEKS=2;
+/* Dry sharp sand, the usual top dressing, runs about 1.6 tonnes per m³. */
+const SAND_T_M3=1.6;
+
+function culturalPlan(s,ctx){
+  const {start,end,year,today,autWk}=ctx;
+  if(!s.gk) return [];
+  const span=end-start;
+  const ops=[];
+  const at=(frac)=>Math.round(start+span*frac);
+  const push=(kind,week,extra)=>{
+    if(week<start||week>end) return;
+    const weekStart=isoWeekMonday(week,Number(year));
+    ops.push({kind,week,weekStart,date:weekStart,iso:iso(weekStart),
+      past:weekStart<today, ...extra});
+  };
+
+  if(s.vcOn){
+    const sev=VC_SEVERITY[s.vcSeverity]||VC_SEVERITY.scarify;
+    const n=Math.max(1,Math.min(3,Number(s.vcTimes)||1));
+    /* Growth must be genuinely underway before wounding the sward, and the
+       last one needs growing weather left to close up. The recovery feed also
+       has to finish before the autumn ceiling starts — a sward opened in
+       September cannot be fed back to health without breaking the rule that
+       protects it over winter. So the last verticut is held clear of autumn
+       by its own recovery period. */
+    const latest=Math.min(end,(autWk||end)-sev.recover);
+    const slots=n===1?[0.28]:n===2?[0.24,0.62]:[0.20,0.45,0.68];
+    slots.forEach((f,i)=>push('verticut',Math.min(at(f),latest),
+      {severity:s.vcSeverity,sev,idx:i,n}));
+  }
+
+  if(s.aeOn){
+    const ty=AER_TYPE[s.aeType]||AER_TYPE.solid;
+    const n=Math.max(1,Math.min(2,Number(s.aeTimes)||1));
+    /* Aeration wants the sward growing so the holes close, and — like
+       verticutting — its recovery has to finish before the autumn ceiling. */
+    const latest=Math.min(end,(autWk||end)-ty.recover);
+    const slots=n===1?[0.30]:[0.22,0.66];
+    slots.forEach((f,i)=>push('aerate',Math.min(at(f),latest),
+      {aeType:s.aeType,ty,idx:i,n}));
+  }
+
+  if(s.tdOn){
+    const n=Math.max(1,Math.min(3,Number(s.tdTimes)||1));
+    const depth=Math.max(0.5,Number(s.tdDepth)||3);
+    const own=n===1?[0.32]:n===2?[0.28,0.60]:[0.24,0.48,0.68];
+    /* Top dressing fills what the other operations open, so when they are
+       scheduled the sand follows them rather than keeping its own calendar.
+       Hollow coring outranks verticutting for the pairing: open core holes
+       have to be filled, whereas verticut grooves closing on their own is
+       merely a missed opportunity. */
+    const anchor=[];
+    ops.filter(o=>o.kind==='aerate'&&o.ty.needsDress).forEach(o=>anchor.push({week:o.week,why:'holes'}));
+    ops.filter(o=>o.kind==='verticut').forEach(o=>anchor.push({week:o.week,why:'grooves'}));
+    ops.filter(o=>o.kind==='aerate'&&!o.ty.needsDress).forEach(o=>anchor.push({week:o.week,why:'holes'}));
+    const seen=new Set(), anchors=[];
+    anchor.forEach(a=>{ if(!seen.has(a.week)){ seen.add(a.week); anchors.push(a); } });
+    for(let i=0;i<n;i++){
+      const a=anchors[i];
+      const wk=a?a.week:at(own[i]);
+      const m3=depth*s.area/1000;
+      push('topdress',wk,{depth,idx:i,n,paired:!!a,fills:a?a.why:null,
+        m3, kg:m3*SAND_T_M3*1000});
+    }
+  }
+
+  if(s.hbOn){
+    const n=Math.max(1,Math.min(2,Number(s.hbTimes)||1));
+    /* Weeds must be growing to take up a systemic herbicide; the turf must
+       not be under stress. Late spring, then late summer. */
+    const slots=n===1?[0.35]:[0.30,0.70];
+    slots.forEach((f,i)=>push('herbicide',at(f),{idx:i,n}));
+  }
+
+  /* Within a shared week, order the day so the sequence reads correctly:
+     verticut first, sand the day after once the debris is off. */
+  ops.forEach(o=>{
+    if(o.kind==='topdress'&&o.paired){
+      o.date=new Date(o.weekStart); o.date.setDate(o.date.getDate()+1);
+      o.iso=iso(o.date); o.past=o.date<today;
+    }
+  });
+  ops.sort((a,b)=>a.date-b.date||a.week-b.week);
+  return ops;
+}
+
 function computePlan(s,entries,yearOpt){
   entries=entries||[];
   const Y=Number(yearOpt)||new Date().getFullYear();
@@ -1228,6 +1436,10 @@ function computePlan(s,entries,yearOpt){
   for(let i=0;i<54;i++) w[i]=w[i]/curPeak*peakRate;
 
   // --- grow-in and repair lift the requirement above maintenance ---
+  /* The cultural schedule has to exist before the weekly curve is boosted,
+     since recovery demand is part of that curve. */
+  const cultural=culturalPlan(s,{start,end,year,today,autWk});
+
   const boost=new Array(54).fill(1), growWeeks=new Set();
   entries.filter(e=>e.type==='seed'&&e.date.startsWith(year)).forEach(e=>{
     const w0=isoWeekOf(parseISO(e.date));
@@ -1235,6 +1447,25 @@ function computePlan(s,entries,yearOpt){
   });
   const nowW=isoWeekOf(today);
   if(s.repair&&isCurrentYear) for(let i=nowW;i<Math.min(54,nowW+REPAIR_WEEKS);i++) boost[i]=Math.max(boost[i],REPAIR_MULT);
+  /* Recovery from cultural work. Boosts overlap by taking the larger rather
+     than compounding — a verticut and a top dress in the same week is one
+     recovery, not two stacked on top of each other. */
+  cultural.forEach(o=>{
+    /* Recovery demand stops at the autumn boundary whatever the schedule says.
+       The winter-hardiness ceiling outranks recovery — feeding a wound in
+       October is how snow mould gets its start. */
+    const stop=w0=>Math.min(54,autWk,w0);
+    if(o.kind==='verticut'){
+      const end2=stop(o.week+o.sev.recover);
+      for(let i=o.week;i<end2;i++) boost[i]=Math.max(boost[i],o.sev.mult);
+    }else if(o.kind==='aerate'){
+      const end2=stop(o.week+o.ty.recover);
+      for(let i=o.week;i<end2;i++) boost[i]=Math.max(boost[i],o.ty.mult);
+    }else if(o.kind==='topdress'){
+      const end2=stop(o.week+TD_WEEKS);
+      for(let i=o.week;i<end2;i++) boost[i]=Math.max(boost[i],TD_MULT);
+    }
+  });
   for(let i=0;i<54;i++) w[i]*=boost[i];
   const target=w.reduce((a,b)=>a+b,0);
   const boosted=target-annual;
@@ -1242,6 +1473,25 @@ function computePlan(s,entries,yearOpt){
   if(growWeeks.size) flags.push({t:'info',h:'Grow-in rate.',
     b:'New grass is fed at '+GROWIN_MULT+'× the normal rate for '+GROWIN_WEEKS+
       ' weeks — seedlings need roughly double while they establish.'});
+  if(cultural.some(o=>o.kind==='verticut')){
+    const worst=cultural.filter(o=>o.kind==='verticut')
+      .reduce((a,o)=>o.sev.mult>a.sev.mult?o:a);
+    flags.push({t:'info',h:'Recovery after verticutting.',
+      b:'Raised '+Math.round((worst.sev.mult-1)*100)+'% for '+worst.sev.recover+
+        ' weeks afterwards. Removing leaf and opening the sward costs the grass '+
+        'tissue it has to rebuild.'});
+  }
+  if(cultural.some(o=>o.kind==='aerate')){
+    const a=cultural.find(o=>o.kind==='aerate');
+    flags.push({t:'info',h:'Recovery after aeration.',
+      b:'Raised '+Math.round((a.ty.mult-1)*100)+'% for '+a.ty.recover+
+        ' weeks. '+(a.ty.needsDress
+          ? 'Coring pulls plugs out, so the holes want filling with sand and it is the best chance all year to overseed — the seed reaches soil rather than sitting on thatch.'
+          : 'Solid tining leaves the soil in place, so recovery is quick.')});
+  }
+  if(cultural.some(o=>o.kind==='topdress')) flags.push({t:'info',h:'Growing through sand.',
+    b:'Raised '+Math.round((TD_MULT-1)*100)+'% for '+TD_WEEKS+
+      ' weeks after each top dressing, while the grass grows up through it.'});
   if(s.repair) flags.push({t:'info',h:'Repair rate.',
     b:'Raised '+Math.round((REPAIR_MULT-1)*100)+'% for '+REPAIR_WEEKS+
       ' weeks. Use more of the same fertiliser rather than a higher-N one.'});
@@ -1564,6 +1814,33 @@ function computePlan(s,entries,yearOpt){
     if(did){ rounds.length=0; rounds.push(...out); rounds.sort((x,y)=>x.date-y.date); }
   }
 
+  /* Granular spread before the blades go in gets thrown into the debris and
+     raked off. Liquid does not have that problem — foliar is absorbed within
+     hours and the soil route is watered straight in — so sprays are left
+     exactly where they are. The fix is order within the week, not exclusion:
+     feeding a freshly opened sward is when the grass most wants nitrogen,
+     which is the same reason the recovery boost exists. */
+  if(cultural.length){
+    const opsByWeek=new Map();
+    cultural.forEach(o=>{ if(!opsByWeek.has(o.week)) opsByWeek.set(o.week,[]); opsByWeek.get(o.week).push(o); });
+    rounds.forEach(r=>{
+      if(r.method!=='gran'||r.done||r.status==='pretrack') return;
+      const ops=opsByWeek.get(r.week);
+      if(!ops||!ops.some(o=>o.kind==='verticut')) return;
+      const last=ops.reduce((a,o)=>o.date>a?o.date:a,ops[0].date);
+      const after=new Date(last); after.setDate(after.getDate()+1);
+      if(after>r.date){
+        r.date=after; r.iso=iso(r.date); r.past=r.date<today;
+        r.afterOp=true;
+      }
+    });
+    rounds.sort((a,b)=>a.date-b.date);
+    if(rounds.some(r=>r.afterOp)) flags.push({t:'info',h:'Feed moved later in the week.',
+      b:'Granular spread before verticutting is thrown into the debris and raked '+
+        'off, so it now falls after the blades and the sand. Liquid is unaffected — '+
+        'it is taken up within hours.'});
+  }
+
   // --- product quantities, after every adjustment ---
   const npk=parseNPK(s.npk,s.oxide);
   const npkL=parseNPK(isLiq(s.form)?(s.npkLiq||s.npk):s.npk,s.oxide);
@@ -1714,7 +1991,7 @@ function computePlan(s,entries,yearOpt){
       kMax:kHi,pMax:pHi};
   }
 
-  return {annual,target,boosted,weekly:w,rounds,autumn:aut,region:R,npk,pIdx,kIdx,combiBal,flags,spray,counts,slack,isCurrentYear,autWk,slow,maxDose,autCap,
+  return {annual,target,boosted,weekly:w,rounds,autumn:aut,region:R,npk,pIdx,kIdx,combiBal,flags,spray,counts,slack,isCurrentYear,autWk,slow,maxDose,autCap,cultural,
           year:Number(year),start,end,startSrc,endSrc,status,growIn:growWeeks.size>0,
           next:future[0]||null,
           totalKg:rounds.reduce((a,r)=>a+r.kg,0),
@@ -1841,6 +2118,11 @@ function refreshPlan(){
     year:String(plan.year),today:new Date(new Date().setHours(0,0,0,0)),
     slack:plan.slack,away:new Set(state.settings.away||[])});
   planByDate=new Map(plan.rounds.map(r=>[r.iso,r]));
+  opsByDate=new Map();
+  (plan.cultural||[]).forEach(o=>{
+    if(!opsByDate.has(o.iso)) opsByDate.set(o.iso,[]);
+    opsByDate.get(o.iso).push(o);
+  });
 }
 
 /* ============================================================
@@ -1856,16 +2138,26 @@ function renderCal(){
   for(let i=0;i<42;i++){
     const d=new Date(start); d.setDate(start.getDate()+i);
     const k=iso(d);
+    /* Week number at the head of each row — the plan talks in week numbers, so
+       the calendar has to as well or the two cannot be read together. */
+    if(i%7===0){
+      const wk=document.createElement('span');
+      wk.className='wknum'; wk.textContent=isoWeekOf(d);
+      box.appendChild(wk);
+    }
     const ent=state.entries.filter(e=>e.date===k);
     const isPlan=planByDate.has(k);
+    const ops=opsByDate.get(k)||[];
     const b=document.createElement('button');
     b.className='day'+(d.getMonth()!==view.getMonth()?' out':'')+(k===today?' today':'')
-      +(k===selected?' sel':'')+(isPlan?' plan':'');
-    const cols=[...new Set(ent.map(e=>T(e.type).color))].slice(0,3);
+      +(k===selected?' sel':'')+(isPlan?' plan':'')+(ops.length?' hasop':'');
+    const cols=[...new Set(ent.map(e=>T(e.type).color))].slice(0,3)
+      .concat(ops.map(o=>OP_LOOK[o.kind].color)).slice(0,4);
     b.innerHTML='<span>'+d.getDate()+'</span><span class="dots">'+
       cols.map(c=>'<i style="background:'+c+'"></i>').join('')+'</span>';
     b.setAttribute('aria-label',d.toDateString()
-      +(ent.length?', '+ent.length+' logged':'')+(isPlan?', fertiliser due':''));
+      +(ent.length?', '+ent.length+' logged':'')+(isPlan?', fertiliser due':'')
+      +(ops.length?', '+ops.map(o=>OP_LOOK[o.kind].name).join(' and '):''));
     b.onclick=()=>{
       selected=k;
       if(d.getMonth()!==view.getMonth()) view=new Date(d.getFullYear(),d.getMonth(),1);
@@ -1878,16 +2170,35 @@ function renderCal(){
 function renderDay(){
   const d=parseISO(selected);
   document.getElementById('dayLabel').textContent=
-    d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+    d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'})+
+    ' · week '+isoWeekOf(d);
 
   const pr=planByDate.get(selected), pbox=document.getElementById('dayPlan');
   const done=state.entries.some(e=>e.date===selected&&e.type==='fert');
+  let html='';
   if(pr&&plan.npk.n>0&&!done){
-    pbox.innerHTML='<div class="flag info" style="margin:0 0 10px"><b>Plan: '+mass(pr.kg)+'</b> of '+
+    html+='<div class="flag info" style="margin:0 0 10px"><b>Plan: '+mass(pr.kg)+'</b> of '+
       esc(state.settings.npk)+' — '+pr.gN.toFixed(2)+' g N/m², '+pr.phase+
       '. <button class="btn sm ghost" id="planLog" style="margin-top:7px;display:block">Log this</button></div>';
+  }
+  /* Cultural work reads the same way the planned feed does, so the day shows
+     everything due on it rather than feeds only. */
+  (opsByDate.get(selected)||[]).forEach(o=>{
+    const L=OP_LOOK[o.kind];
+    let detail='';
+    if(o.kind==='verticut') detail=o.sev.label.toLowerCase()+', about '+o.sev.recover+' weeks to recover';
+    if(o.kind==='aerate')   detail=o.ty.label.toLowerCase()+', about '+o.ty.recover+' weeks to recover'+
+      (o.ty.needsDress?', and the holes want filling':'');
+    if(o.kind==='topdress') detail=o.depth+' mm, '+mass(o.kg)+' of sand'+
+      (o.fills==='holes'?', into the holes':o.fills==='grooves'?', into the grooves':'');
+    if(o.kind==='herbicide') detail=o.n>1?(o.idx===0?'first pass of the season':'second pass'):'one pass this season';
+    /* Never render a bare "—." if a kind ever arrives without a detail line. */
+    html+='<div class="flag info" style="margin:0 0 10px"><b>'+L.glyph+' '+L.name+'</b>'+
+      (detail?' — '+detail:'')+'.</div>';
+  });
+  pbox.innerHTML=html;
+  if(document.getElementById('planLog'))
     document.getElementById('planLog').onclick=()=>openSheet('fert',pr.kg);
-  } else pbox.innerHTML='';
 
   const list=state.entries.filter(e=>e.date===selected);
   const box=document.getElementById('dayEntries');
@@ -2169,7 +2480,29 @@ function flagHTML(f){return '<div class="flag'+(f.t==='info'?' info':'')+'"><b>'
 
 const MARK={done:'\u2713',missed:'\u2715',due:'\u25CF',upcoming:'\u25CB',pretrack:'\u00B7',away:'\u2708',overdue:'\u0021',skipped:'\u2298'};
 
+const OP_LOOK={
+  verticut: {glyph:'≡', cls:'op-vc', name:'Verticutting', color:'#6E8B5C'},
+  aerate:   {glyph:'⁙', cls:'op-ae', name:'Aeration',     color:'#5C7D8B'},
+  topdress: {glyph:'▦', cls:'op-td', name:'Top dressing', color:'#9A8C6E'},
+  herbicide:{glyph:'✳', cls:'op-hb', name:'Herbicide',    color:'#7E7099'}
+};
+function opRow(o,p,s){
+  const L=OP_LOOK[o.kind];
+  let detail='';
+  if(o.kind==='verticut') detail=o.sev.label.toLowerCase();
+  if(o.kind==='aerate') detail=o.ty.label.toLowerCase();
+  if(o.kind==='topdress') detail=(o.fills==='holes'?'into the holes · ':o.fills==='grooves'?'into the grooves · ':'')+
+    o.depth+' mm — '+mass(o.kg);
+  if(o.kind==='herbicide') detail=o.n>1?(o.idx===0?'first pass':'second pass'):'one pass';
+  return '<div class="app op '+L.cls+(o.past?' s-done':'')+'">'+
+    '<span class="mk">'+L.glyph+'</span>'+
+    '<span class="dt">'+o.date.getDate()+' '+MONTHS_S[o.date.getMonth()]+'</span>'+
+    '<span class="lb">'+L.name+'<span class="sm"> '+detail+'</span></span>'+
+    '<span class="ds">wk '+o.week+'</span></div>';
+}
+
 function appRow(r,p,s){
+  if(r.kind) return opRow(r,p,s);
   const lab={done:'Done',missed:'Missed',due:'This week',upcoming:'',
              pretrack:'Before tracking',away:'Away',overdue:'Overdue',skipped:'Skipped'}[r.status];
   const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
@@ -2180,6 +2513,7 @@ function appRow(r,p,s){
   if(r.growIn) bits.push('grow-in');
   if(r.split) bits.push('pass '+(r.split.k+1)+' of '+r.split.n);
   if(r.status!=='done'&&r.status!=='pretrack'&&Math.abs(r.gN-r.gNbase)>0.05) bits.push('adjusted');
+  if(r.afterOp) bits.push('after the blades');
   if(r.status==='away') return '<div class="app s-away">'+
     '<input type="checkbox" class="box" data-wk="'+r.week+'" aria-label="Home this week">'+
     '<span class="dt">'+r.date.getDate()+' '+MONTHS_S[r.date.getMonth()]+'</span>'+
@@ -2218,7 +2552,12 @@ function ironRow(r,s){
 
 function roundsHTML(p,s){
   if(!p.rounds.length) return '<div class="empty">No applications in this season window.</div>';
-  const all=p.rounds.filter(r=>!r.merged).concat(p.iron?p.iron.rounds:[]).sort((a,b)=>a.date-b.date);
+  /* Cultural work sits in the same list as the feeds, ordered by date — the
+     point of the schedule is seeing it against the feeding, not beside it. */
+  const all=p.rounds.filter(r=>!r.merged)
+    .concat(p.iron?p.iron.rounds:[])
+    .concat(p.cultural||[])
+    .sort((a,b)=>a.date-b.date);
   const g=[];
   all.forEach(r=>{
     const k=r.date.getMonth(), last=g[g.length-1];
@@ -2303,8 +2642,8 @@ function syncAdvUI(){
   });
   const hint=F('advHint');
   if(hint) hint.textContent = adv
-    ? 'Everything on: liquid and combination feeding, iron, weed control, and the agronomy behind each number.'
-    : 'Just the essentials — granular feeding, and how much to put down. Turn on for liquid feeding, iron and weed control.';
+    ? 'Everything on: liquid and combination feeding, iron, herbicide, and the agronomy behind each number.'
+    : 'Just the essentials — granular feeding, and how much to put down. Turn on for liquid feeding, iron and herbicide.';
 
   // mismatch: configuration needs features simple mode does not show
   const why=adv?[]:advNeeds(s);
@@ -2796,6 +3135,11 @@ function readSettings(){
     area:Math.max(1,parseFloat(F('area').value)||200),
     region:F('region').value, grade:segGet('grade'),
     adv:F('advMode').checked,
+    gk:F('gkMode').checked,
+    vcOn:F('vcOn').checked, vcSeverity:F('vcSeverity').value, vcTimes:Number(segGet('vcTimes'))||1,
+    aeOn:F('aeOn').checked, aeType:F('aeType').value, aeTimes:Number(segGet('aeTimes'))||1,
+    tdOn:F('tdOn').checked, tdTimes:Number(segGet('tdTimes'))||1, tdDepth:parseFloat(F('tdDepth').value)||3,
+    hbOn:F('hbOn').checked, hbTimes:Number(segGet('hbTimes'))||1,
     clip:F('clipBox').checked?'remove':'mulch', shade:segGet('shade'), soil:F('soil').value, slowRel:F('slowRel').checked,
     cadence:segGet('form')==='gran' ? 'rounds' : segGet('cadence'),
     rounds:Number(segGet('granCad'))||4,
@@ -2826,6 +3170,14 @@ function writeSettings(){
   F('clipBox').checked = s.clip==='remove';
   F('slowRel').checked = !!s.slowRel;
   F('advMode').checked = !!s.adv;
+  F('gkMode').checked   = !!s.gk;
+  F('aeOn').checked=!!s.aeOn; F('aeType').value=s.aeType||'solid';
+  segSet('aeTimes',String(s.aeTimes||1));
+  F('vcOn').checked=!!s.vcOn; F('vcSeverity').value=s.vcSeverity||'scarify';
+  segSet('vcTimes',String(s.vcTimes||1));
+  F('tdOn').checked=!!s.tdOn; segSet('tdTimes',String(s.tdTimes||1));
+  F('tdDepth').value=s.tdDepth||3;
+  F('hbOn').checked=!!s.hbOn; segSet('hbTimes',String(s.hbTimes||1));
   F('uptake').value=s.uptake; F('tank').value=s.tank;
   F('plenProd').value=s.plenProd; F('plenArea').value=s.plenArea||'';
   F('sprayVol').value=s.sprayVol||'';
@@ -2834,6 +3186,26 @@ function writeSettings(){
   F('repair2').checked=!!s.repair;
   syncCadence();
 }
+/* Turn the schedule settings into something concrete: what the choice means
+   in recovery time, and how much sand a depth actually is. */
+function gkEcho(){
+  const s=state.settings, F2=id=>document.getElementById(id);
+  const ty=AER_TYPE[F2('aeType').value]||AER_TYPE.solid;
+  if(F2('aeEcho')) F2('aeEcho').textContent=
+    ty.label+' — about '+ty.recover+' weeks to recover'+
+    (ty.needsDress?', and the holes want top dressing afterwards.':'.');
+  const sev=VC_SEVERITY[F2('vcSeverity').value]||VC_SEVERITY.scarify;
+  if(F2('vcEcho')) F2('vcEcho').textContent=
+    sev.label+' — about '+sev.recover+' weeks to recover, and no herbicide for '+
+    sev.lockout+' week'+(sev.lockout===1?'':'s')+' after.';
+  const d=parseFloat(F2('tdDepth').value)||0, area=s.area||0;
+  if(F2('tdEcho')) F2('tdEcho').textContent = d>0&&area>0
+    ? mass(d*area/1000*SAND_T_M3*1000)+' of sand per pass'
+    : '';
+  if(F2('hbEcho')) F2('hbEcho').textContent=
+    'Placed when weeds are growing and the turf is not stressed.';
+}
+
 function syncCadence(){
   const f=segGet('form'), liq=isLiq(f), combi=f==='combi', gran=f==='gran'||combi;
   F('granBlock').hidden = !gran;
@@ -2843,7 +3215,16 @@ function syncCadence(){
   F('cadLabel').textContent     = combi?'Liquid feed every':'Feed every';
   F('npkLabel').textContent     = combi?'Granular fertiliser':'Fertiliser';
   F('npkLiqLabel').textContent  = combi?'Liquid fertiliser':'Fertiliser';
-  const adv=ADV();
+  const adv=ADV(), gk=adv&&!!state.settings.gk;
+  /* Greenkeeper only exists inside Advanced, and each schedule's detail only
+     when that schedule is on. */
+  F('gkField').hidden  = !adv;
+  F('gkCards').hidden  = !gk;
+  F('aeFields').hidden = !gk||!F('aeOn').checked;
+  F('vcFields').hidden = !gk||!F('vcOn').checked;
+  F('tdFields').hidden = !gk||!F('tdOn').checked;
+  F('hbFields').hidden = !gk||!F('hbOn').checked;
+  if(gk) gkEcho();
   F('volFields').hidden   = !liq;
   F('sprayFields').hidden = !liq || !adv;      // leaf/soil route and tank size
   F('slowField').hidden   = f==='liq' || !adv; // slow-release is a granular idea
@@ -3150,7 +3531,24 @@ F('lawnSwitch').onclick=openLawnSheet;
 /* Settings tab commits on change — wire every field to save itself. */
 ['lawnName','area','region','npk','npkLiq','soil','oxide','tank','uptake','sprayVol','plenArea','ironFe']
   .forEach(id=>{ const el=F(id); if(el) el.addEventListener('change',commitSettings); });
-F('advMode')&&(F('advMode').onchange=commitSettings);
+/* Greenkeeper lives inside Advanced, so it cannot outlive it — and its
+   schedules cannot outlive greenkeeper. One helper, used by both. */
+function GK_OFF(){
+  ['vcOn','tdOn','hbOn','aeOn'].forEach(id=>{ const el=F(id); if(el) el.checked=false; });
+}
+F('advMode')&&(F('advMode').onchange=()=>{
+  if(!F('advMode').checked){ F('gkMode').checked=false; GK_OFF(); }
+  commitSettings();
+});
+/* Switching greenkeeper off turns its schedules off too — leaving them ticked
+   invisibly means turning it back on silently reinstates work you may not
+   still want. */
+F('gkMode')&&(F('gkMode').onchange=()=>{
+  if(!F('gkMode').checked) GK_OFF();
+  commitSettings();
+});
+['vcOn','tdOn','hbOn','aeOn','vcSeverity','aeType','tdDepth'].forEach(id=>{
+  const el=F(id); if(el) el.addEventListener('change',commitSettings); });
 ['clipBox','slowRel','ironOn','repair2'].forEach(id=>{
   const el=F(id); if(el) el.addEventListener('change',commitSettings); });
 ['ironPurpose','ironInterval','plenProd'].forEach(id=>{
@@ -3225,7 +3623,11 @@ const onSet=()=>{
   readSettings(); save();
   renderPlan(); renderCal(); renderDay(); renderSeason(); renderHome(); renderLawnBar();
 };
-['grade','shade','cadence','form','granCad'].forEach(id=>wireSeg(id,onSet));
+/* Every segmented control needs wiring here or it renders but does nothing —
+   the greenkeeper schedules were added to the markup without this and were
+   inert as a result. */
+['grade','shade','cadence','form','granCad','vcTimes','tdTimes','hbTimes','aeTimes']
+  .forEach(id=>{ if(F(id)) wireSeg(id,onSet); });
 F('granShare').addEventListener('input',()=>{ F('shareVal').textContent=F('granShare').value+'%'; onSet(); });
 ['area','region','soil','npk','npkLiq','oxide','tank','uptake','sprayVol','clipBox','slowRel','repair2',
  'plenProd','plenArea','ironOn','ironPurpose','ironFe','ironInterval']
