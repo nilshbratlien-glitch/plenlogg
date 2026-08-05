@@ -15,6 +15,8 @@
 
 import { getStore } from '@netlify/blobs';
 
+/* Codes are user-chosen and normalised client-side to A-Z0-9 only; the same
+   shape is enforced here so a malformed key can never reach the store. */
 const CODE_RE = /^[A-Z0-9]{8,32}$/;
 
 export default async (req) => {

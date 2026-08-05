@@ -175,9 +175,10 @@ input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;width:auto;marg
 .nextbtns{display:flex;gap:8px;margin-top:2px;flex-wrap:wrap}
 .warnCard{border-color:var(--soil);background:var(--soil-soft)}
 .warnCard b{display:block;margin-bottom:2px}
+.hint.warnTxt{color:var(--soil)}
 .btn.arm{background:var(--soil);color:#fff;border-color:var(--soil)}
 .synced{font-family:var(--mono);font-size:10.5px;color:var(--muted);text-align:center;margin:10px 0 0}
-.synccode{font-family:var(--mono);font-size:20px;letter-spacing:.18em;font-weight:600;color:var(--ink);
+.synccode{font-family:var(--mono);font-size:18px;letter-spacing:.12em;font-weight:600;color:var(--ink);word-break:break-all;
   background:var(--chloro-soft);border:1px solid var(--line-soft);border-radius:10px;padding:12px;text-align:center;user-select:all}
 .nextbtns .btn{flex:none}
 .next .what{font-family:var(--cond);font-size:21px;font-weight:700;line-height:1.15;margin-top:3px}
@@ -637,8 +638,16 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
 <div class="card">
       <p class="eyebrow">Backup &amp; sync</p>
       <div id="syncOff">
-        <p class="hint" style="margin-top:0">Keep a copy off this device, so a lost or wiped phone does not take your log with it. Turn it on here, then enter the same code on your other device.</p>
-        <button class="btn" id="syncStart">Turn on backup</button>
+        <p class="hint" style="margin-top:0">Keep a copy off this device, so a lost or wiped phone does not take your log with it. Pick a code, then enter the same one on your other device.</p>
+        <div class="field">
+          <label for="syncPick">Your code</label>
+          <input id="syncPick" placeholder="something only you would pick" autocapitalize="none" autocorrect="off" spellcheck="false">
+          <div class="hint" id="syncPickHint" style="margin-top:4px"></div>
+        </div>
+        <div class="nextbtns">
+          <button class="btn" id="syncStart">Turn on backup</button>
+          <button class="btn ghost sm" id="syncGen">Make one up for me</button>
+        </div>
       </div>
       <div id="syncOn" hidden>
         <p class="hint" style="margin-top:0">Your code — enter this on any other device to share the same log.</p>
@@ -653,7 +662,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
       <details style="margin-top:10px"><summary>Use a code from another device</summary>
         <div class="field" style="margin-top:8px">
           <label for="syncJoin">Code from your other device</label>
-          <input id="syncJoin" placeholder="XXXXXXXX" autocapitalize="characters" spellcheck="false">
+          <input id="syncJoin" placeholder="the code you chose" autocapitalize="none" autocorrect="off" spellcheck="false">
         </div>
         <button class="btn sm" id="syncJoinBtn">Link this device</button>
         <p class="hint">This device will take on that log, replacing what is stored here now. Export first if you have anything you want to keep.</p>
@@ -767,6 +776,11 @@ svg.chart{width:100%;height:auto;display:block;overflow:hidden}
       <div class="field"><label for="fKg">Fertiliser used (kg)</label><input id="fKg" inputmode="decimal" placeholder="4.0"><div class="hint" id="fKgEcho" style="margin-top:4px"></div></div>
       <div class="field"><label for="fNpk">N-P-K</label><input id="fNpk" placeholder="14-3-15"></div>
     </div>
+    <div class="field" id="fNField">
+      <label for="fN">Nitrogen (g N/m²)</label>
+      <input id="fN" inputmode="decimal" placeholder="0.50">
+      <div class="hint" id="fNEcho" style="margin-top:4px"></div>
+    </div>
   </div>
   <div id="ironFields" hidden>
     <div class="grid2">
@@ -830,7 +844,20 @@ const Sync={
     for(let i=0;i<8;i++) out+=A[buf[i]%A.length];
     return out;
   },
-  link(code){ const c=this.cfg(); c.code=String(code||'').toUpperCase().trim(); c.last=0; this.save(c); },
+  /* Codes are chosen by the user, so normalise hard: trim, strip spaces and
+     punctuation, uppercase. "My Lawn 2026" and "mylawn2026" must reach the
+     same backup, or two devices silently end up on different ones. */
+  norm(code){ return String(code||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,''); },
+  /* The code is the ONLY thing guarding the data, so a floor on length is
+     the difference between "memorable" and "guessable in an afternoon". */
+  checkCode(code){
+    const c=this.norm(code);
+    if(c.length<8)  return {ok:false,c,why:'Use at least 8 letters or numbers.'};
+    if(c.length>32) return {ok:false,c,why:'Keep it under 32 characters.'};
+    if(/^(.)\1+$/.test(c)) return {ok:false,c,why:'Too simple — mix it up a bit.'};
+    return {ok:true,c};
+  },
+  link(code){ const c=this.cfg(); c.code=this.norm(code); c.last=0; this.save(c); },
   unlink(){ this.save({}); },
   /* Push: fire-and-forget. A failure here must never cost the user their
      local save, so it resolves quietly and just leaves `last` untouched. */
@@ -2988,6 +3015,7 @@ function openSheet(type,kg,entry,why){
   if(wy){ wy.textContent=why||''; wy.hidden=!why; }
   syncSheetFields();
   F('fKg').value=draftKg?kgField(draftKg):'';
+  if(F('fN')) F('fN').value = draftKg?nFromKg(draftKg).toFixed(2):'';
   echoKg();
   F('fNpk').value=state.settings.npk;
   F('mHt').value=''; F('sTemp').value=''; F('sTempEcho').textContent=''; F('note').value='';
@@ -3014,13 +3042,67 @@ function kgField(v){
   return t.indexOf('.')<0 ? t : t.replace(/0+$/,'').replace(/\.$/,'');
 }
 
+/* The two quantity fields are the same number in different units, so either
+   can be typed and the other follows. Deciding "half a gram of N" and
+   deciding "35 grams of AdBlue" are the same decision from opposite ends —
+   this saves working it out elsewhere and re-entering it here. */
+function nFromKg(kg){
+  const s=state.settings, n=parseNPK(F('fNpk').value.trim()||s.npk,s.oxide).n;
+  return (n>0&&s.area>0) ? kg*1000*(n/100)/s.area : 0;
+}
+function kgFromN(gn){
+  const s=state.settings, n=parseNPK(F('fNpk').value.trim()||s.npk,s.oxide).n;
+  return (n>0&&s.area>0) ? gn*s.area/(n/100)/1000 : 0;
+}
+let qtyEcho=false;                 // guards the two fields from updating each other in a loop
+function syncQty(from){
+  if(qtyEcho) return;
+  qtyEcho=true;
+  const s=state.settings;
+  if(from==='kg'){
+    const kg=parseFloat(F('fKg').value);
+    F('fN').value = kg>0 ? nFromKg(kg).toFixed(2) : '';
+  }else{
+    const gn=parseFloat(F('fN').value);
+    const kg=gn>0?kgFromN(gn):0;
+    F('fKg').value = kg>0 ? kgField(kg) : '';
+  }
+  qtyEcho=false;
+  echoKg(); echoN();
+}
+/* For a liquid feed, the useful follow-up is how much water it wants and
+   whether the mix would be too strong — the moment an unplanned top-up is
+   most likely to get mixed hot. */
+function echoN(){
+  const el=F('fNEcho'); if(!el) return;
+  const s=state.settings, gn=parseFloat(F('fN').value);
+  if(!(gn>0)){ el.textContent=''; el.className='hint'; return; }
+  if(!isLiq(s.form)){ el.textContent=''; el.className='hint'; return; }
+  const totalN=gn*s.area;                                  // grams of N over the lawn
+  const minL=totalN/MAX_N_CONC;                            // litres to stay under the ceiling
+  const useL=Math.max(minL, s.area*(s.uptake==='leaf'?25:50)/1000);
+  el.textContent='Mix into at least '+minL.toFixed(1)+' L — '+useL.toFixed(1)+
+    ' L is a comfortable amount for '+s.area+' m².';
+  el.className='hint';
+  if(s.uptake==='leaf'&&gn>FOLIAR_MAX_N){
+    el.textContent='Over '+FOLIAR_MAX_N+' g N/m² in one leaf pass — more than the leaf takes up. '+
+      'Water it in, or split it across two days.';
+    el.className='hint warnTxt';
+  }
+}
+
 function echoKg(){
   const v=parseFloat(F('fKg').value);
   F('fKgEcho').textContent = v>0 ? 'That is '+mass(v)+(v<0.02?' — did you mean grams?':'') : '';
 }
-F('fKg').addEventListener('input',echoKg);
+F('fKg').addEventListener('input',()=>syncQty('kg'));
+F('fN').addEventListener('input',()=>syncQty('n'));
+F('fNpk').addEventListener('input',()=>syncQty('kg'));
 function syncSheetFields(){
   F('fertFields').hidden=draftType!=='fert';
+  /* Simple mode works in product weight only, so the nitrogen field stays out
+     of the sheet people use most. */
+  if(F('fNField')) F('fNField').hidden = !ADV();
   F('mowFields').hidden=draftType!=='mow';
   F('soilFields').hidden=draftType!=='soil';
   F('ironFields').hidden=draftType!=='iron';
@@ -3186,8 +3268,31 @@ function renderSyncLine(){
 }
 function wireSync(){
   const $=id=>document.getElementById(id);
+  const pickHint=()=>{
+    const el=$('syncPickHint'); if(!el) return;
+    const v=$('syncPick').value;
+    if(!v){ el.textContent='At least 8 letters or numbers. Anything you will remember.'; el.className='hint'; return; }
+    const r=Sync.checkCode(v);
+    el.textContent = r.ok ? 'Will be saved as '+r.c : r.why;
+    el.className = r.ok ? 'hint' : 'hint warnTxt';
+  };
+  $('syncPick')&&($('syncPick').addEventListener('input',pickHint), pickHint());
+  $('syncGen')&&($('syncGen').onclick=()=>{ $('syncPick').value=Sync.make(); pickHint(); });
   $('syncStart')&&($('syncStart').onclick=async()=>{
-    Sync.link(Sync.make());
+    const r=Sync.checkCode($('syncPick').value);
+    if(!r.ok){ pickHint(); return; }
+    Sync.link(r.c);
+    /* An existing backup under this code belongs to another device — adopt it
+       rather than overwrite, or pairing a second device wipes the first. */
+    const res=await Sync.pull(store&&store.updated||0);
+    if(res.status==='newer'&&res.doc){
+      loadStore(res.doc.data); save();
+      writeSettings(); refreshPlan(); renderLawnBar();
+      renderCal(); renderDay(); renderPlan(); renderSeason(); renderHome();
+      renderSyncLine();
+      alert('That code already had a log saved under it — this device now shows it.');
+      return;
+    }
     const ok=await Sync.push(store);
     renderSyncLine();
     if(!ok) alert('Backup is on, but the first upload did not go through. It will retry next time you change something.');
@@ -3207,8 +3312,9 @@ function wireSync(){
     setTimeout(()=>$('syncNow').textContent='Sync now',1500);
   });
   $('syncJoinBtn')&&($('syncJoinBtn').onclick=async()=>{
-    const v=($('syncJoin').value||'').toUpperCase().trim();
-    if(!/^[A-Z0-9]{8,32}$/.test(v)){ alert('That code does not look right — it should be 8 characters.'); return; }
+    const r=Sync.checkCode($('syncJoin').value);
+    if(!r.ok){ alert(r.why); return; }
+    const v=r.c;
     if(!ask('Link this device to that code? The log stored here now will be replaced by the one from your other device.')) return;
     Sync.link(v);
     const res=await Sync.pull(0);
