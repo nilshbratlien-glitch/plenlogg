@@ -1352,18 +1352,43 @@ function culturalPlan(s,ctx){
        have to be filled, whereas verticut grooves closing on their own is
        merely a missed opportunity. */
     const anchor=[];
-    ops.filter(o=>o.kind==='aerate'&&o.ty.needsDress).forEach(o=>anchor.push({week:o.week,why:'holes'}));
-    ops.filter(o=>o.kind==='verticut').forEach(o=>anchor.push({week:o.week,why:'grooves'}));
-    ops.filter(o=>o.kind==='aerate'&&!o.ty.needsDress).forEach(o=>anchor.push({week:o.week,why:'holes'}));
+    /* must=true means the sand is required, not merely useful: core holes have
+       to be filled. Optional anchors give way rather than crowd the season. */
+    ops.filter(o=>o.kind==='aerate'&&o.ty.needsDress).forEach(o=>anchor.push({week:o.week,why:'holes',must:true}));
+    ops.filter(o=>o.kind==='verticut').forEach(o=>anchor.push({week:o.week,why:'grooves',must:false}));
+    ops.filter(o=>o.kind==='aerate'&&!o.ty.needsDress).forEach(o=>anchor.push({week:o.week,why:'holes',must:false}));
     const seen=new Set(), anchors=[];
     anchor.forEach(a=>{ if(!seen.has(a.week)){ seen.add(a.week); anchors.push(a); } });
-    for(let i=0;i<n;i++){
-      const a=anchors[i];
-      const wk=a?a.week:at(own[i]);
+
+    /* Each anchor claims the slot it is NEAREST to, rather than slots being
+       handed out in order. Taking them in order strands the leftovers: an
+       anchor late in the season would consume the first slot, pushing the
+       unpaired dressing to the last one and leaving the middle of the season
+       empty. Nearest-slot keeps the season evenly covered while still
+       pairing. */
+    const slots=own.slice(0,n).map((f,i)=>({i,week:at(f),a:null}));
+    const TD_MIN_GAP=3;   // weeks; below this two dressings are effectively one
+    anchors.slice(0,n).forEach(a=>{
+      /* An optional anchor that would land on top of an existing dressing is
+         not worth the clustering — the sand does more good spread out. */
+      if(!a.must){
+        const taken=slots.filter(sl=>sl.a).map(sl=>sl.a.week);
+        if(taken.some(w=>Math.abs(w-a.week)<TD_MIN_GAP)) return;
+      }
+      let best=null,bestD=Infinity;
+      slots.forEach(sl=>{
+        if(sl.a) return;
+        const d=Math.abs(sl.week-a.week);
+        if(d<bestD){ bestD=d; best=sl; }
+      });
+      if(best) best.a=a;
+    });
+    slots.forEach(sl=>{
+      const wk=sl.a?sl.a.week:sl.week;
       const m3=depth*s.area/1000;
-      push('topdress',wk,{depth,idx:i,n,paired:!!a,fills:a?a.why:null,
+      push('topdress',wk,{depth,idx:sl.i,n,paired:!!sl.a,fills:sl.a?sl.a.why:null,
         m3, kg:m3*SAND_T_M3*1000});
-    }
+    });
   }
 
   if(s.hbOn){
